@@ -10,7 +10,8 @@ import {
   Wrench, 
   Fuel,
   Package,
-  Settings
+  Settings,
+  UserCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -26,7 +27,7 @@ const CatalogosIndex = () => {
       id: 'pilotos',
       title: 'Pilotos',
       description: 'Administración de pilotos y conductores',
-      icon: <Building className="h-8 w-8 text-purple-600" />,
+      icon: <UserCheck className="h-8 w-8 text-purple-600" />,
       path: '/catalogos/pilotos',
       color: 'purple',
       stats: {

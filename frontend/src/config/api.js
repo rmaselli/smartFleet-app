@@ -22,6 +22,16 @@ const API_CONFIG = {
     GET: (id) => `/api/vehiculos/${id}`
   },
   
+// Endpoints de pilotos / choferes
+PILOTOS: {
+  LIST: '/api/pilotos',
+  CREATE: '/api/pilotos',
+  UPDATE: (id) => `/api/pilotos/${id}`,
+  DELETE: (id) => `/api/pilotos/${id}`,
+  GET: (id) => `/api/pilotos/${id}`
+},
+
+
   // Endpoints de tareas
   TASKS: {
     LIST: '/api/tasks',

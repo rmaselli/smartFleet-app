@@ -36,35 +36,34 @@ import API_CONFIG from '../../config/api';
 import { getEnvConfig } from '../../config/environment';
 
 
-const Vehiculos = () => {
+const Pilotos = () => {
   const { user } = useAuth();
-  const [vehicles, setVehicles] = useState([]);
+  const [pilotos, setPilotos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState(null);
+  const [editingPiloto, setEditingPiloto] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [vehicleToDelete, setVehicleToDelete] = useState(null);
+  const [pilotoToDelete, setPilotoToDelete] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
     id_empresa: 1,
     id_sede: 1,
-    marca_vehiculo: '',
+    nombres: '',
     placa_id: '',
-    modelo: '',
-    anio_vehiculo: new Date().getFullYear(),
-    tipo_vehiculo: '',
+    apellidos: '',
+    fe_nacimiento: '',
+    direccion: '',
+    telefono: '',
+    num_dpi: '',
+    fe_vence_dpi: '',
+    num_licencia: '',
+    fe_vence_licencia: '',
+    viajes: '',
     estado: 'ACT',
-    color: '',
-    motor: '',
-    chasis: '',
-    kilometraje: '',
-    tipo_combustible: '',
-    capacidad_carga: '',
-    ultima_lectura: '',
     observaciones: ''
   });
 
@@ -72,7 +71,8 @@ const Vehiculos = () => {
 
   const breadcrumbItems = [
     { id: 'catalogos', label: 'Catálogos', path: '/catalogos' },
-    { id: 'vehiculos', label: 'Vehículos', path: '/catalogos/vehiculos' }
+    //{ id: 'vehiculos', label: 'Vehículos', path: '/catalogos/vehiculos' },
+    { id: 'pilotos', label: 'Pilotos', path: '/catalogos/pilotos' }
   ];
 
   // Estados disponibles
@@ -104,23 +104,23 @@ const Vehiculos = () => {
     'Otro'
   ];
 
-  // Cargar vehículos
-  const loadVehicles = async () => {
+  // Cargar Pilotos
+  const loadPilotos = async () => {
     setLoading(true);
     try {
-      console.log('🚀 Cargando vehículos desde:', API_CONFIG.VEHICULOS.LIST);
-      const response = await axiosInstance.get(API_CONFIG.VEHICULOS.LIST);
-      console.log('✅ Respuesta de vehículos:', response.data);
+      console.log('🚀 Cargando pilotos desde:', API_CONFIG.PILOTOS.LIST);
+      const response = await axiosInstance.get(API_CONFIG.PILOTOS.LIST);
+      console.log('✅ Respuesta de pilotos:', response.data);
       
       if (response.data.success) {
-        setVehicles(response.data.data);
-        console.log(`📊 ${response.data.data.length} vehículos cargados`);
+        setPilotos(response.data.data);
+        console.log(`📊 ${response.data.data.length} pilotos cargados`);
       } else {
         console.warn('⚠️ Respuesta sin éxito:', response.data);
-        setVehicles([]);
+        setPilotos([]);
       }
     } catch (error) {
-      console.error('❌ Error cargando vehículos:', error);
+      console.error('❌ Error cargando pilotos:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -141,25 +141,25 @@ const Vehiculos = () => {
         alert(`Error ${error.response.status}: ${error.response.data?.error || 'Error desconocido'}`);
       }
       
-      setVehicles([]);
+      setPilotos([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar vehículos al montar el componente
+  // Cargar pilotos al montar el componente
   useEffect(() => {
-    loadVehicles();
+    loadPilotos();
   }, []);
 
-  // Filtrar vehículos
-  const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesSearch = vehicle.placa_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vehicle.marca_vehiculo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vehicle.modelo?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtrar pilotos
+  const filteredPilotos = pilotos.filter(piloto => {
+    const matchesSearch = piloto.id_piloto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         piloto.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         piloto.nombres?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === 'all' || vehicle.estado === filterStatus;
-    const matchesType = filterType === 'all' || vehicle.tipo_vehiculo === filterType;
+    const matchesStatus = filterStatus === 'all' || piloto.estado === filterStatus;
+    const matchesType = filterType === 'all' || piloto.tipo_vehiculo === filterType;
     
     return matchesSearch && matchesStatus && matchesType;
   });
@@ -169,11 +169,16 @@ const Vehiculos = () => {
     const errors = {};
     
     if (!formData.id_sede.trim()) errors.id_sede = 'La sede es requerida';
-    if (!formData.placa_id.trim()) errors.placa_id = 'La placa es requerida';
-    if (!formData.marca_vehiculo.trim()) errors.marca_vehiculo = 'La marca es requerida';
-    if (!formData.modelo.trim()) errors.modelo = 'El modelo es requerido';
-    if (!formData.anio_vehiculo) errors.anio_vehiculo = 'El año es requerido';
-    if (!formData.tipo_vehiculo.trim()) errors.tipo_vehiculo = 'El tipo de vehículo es requerido';
+    if (!formData.nombres.trim()) errors.nombres = 'Los nombres son requeridos';
+    if (!formData.apellidos.trim()) errors.apellidos = 'Los apellidos son requeridos';
+    if (!formData.fe_nacimiento.trim()) errors.fe_nacimiento = 'La fecha de nacimiento es requerida';
+    if (!formData.direccion.trim()) errors.direccion = 'La dirección es requerida';
+    if (!formData.telefono.trim()) errors.telefono = 'El teléfono es requerido';
+    if (!formData.num_dpi.trim()) errors.num_dpi = 'El número de DPI es requerido';
+    if (!formData.fe_vence_dpi.trim()) errors.fe_vence_dpi = 'La fecha de vencimiento del DPI es requerida';
+    if (!formData.num_licencia.trim()) errors.num_licencia = 'El número de licencia es requerido';
+    if (!formData.fe_vence_licencia.trim()) errors.fe_vence_licencia = 'La fecha de vencimiento de la licencia es requerida';
+    if (!formData.viajes.trim()) errors.viajes = 'Los viajes son requeridos';
     if (!formData.estado) errors.estado = 'El estado es requerido';
     
     setFormErrors(errors);
@@ -202,108 +207,101 @@ const Vehiculos = () => {
     setFormData({
       id_empresa: 1,
       id_sede: 1,
-      marca_vehiculo: '',
-      placa_id: '',
-      modelo: '',
-      anio_vehiculo: new Date().getFullYear(),
-      tipo_vehiculo: '',
+      nombres: '',
+      apellidos: '',
+      fe_nacimiento: '',
+      direccion: '',
+      telefono: '',
+      num_dpi: '',
+      fe_vence_dpi: '',
+      num_licencia: '',
+      fe_vence_licencia: '',
+      viajes: '',
       estado: 'ACT',
-      color: '',
-      motor: '',
-      chasis: '',
-      kilometraje: '',
-      tipo_combustible: '',
-      capacidad_carga: '',
-      ultima_lectura: '',
-      observaciones: ''
+      observaciones: ''      
     });
     setFormErrors({});
-    setEditingVehicle(null);
+    setEditingPiloto(null);
     setShowForm(true);
   };
 
   // Abrir formulario para editar
-  const openEditForm = (vehicle) => {
+  const openEditForm = (piloto) => {
     setFormData({
-      id_empresa: vehicle.id_empresa || 1,
-      id_sede: vehicle.id_sede || 1,
-      marca_vehiculo: vehicle.marca_vehiculo || '',
-      placa_id: vehicle.placa_id || '',
-      modelo: vehicle.modelo || '',
-      anio_vehiculo: vehicle.anio_vehiculo || new Date().getFullYear(),
-      tipo_vehiculo: vehicle.tipo_vehiculo || '',
-      estado: vehicle.estado || 'ACT',
-      color: vehicle.color || '',
-      motor: vehicle.motor || '',
-      chasis: vehicle.chasis || '',
-      kilometraje: vehicle.kilometraje || '',
-      tipo_combustible: vehicle.tipo_combustible || '',
-      capacidad_carga: vehicle.capacidad_carga || '',
-      ultima_lectura: vehicle.ultima_lectura || '',
-      observaciones: vehicle.observaciones || ''
+      id_empresa: piloto.id_empresa || 1,
+      id_sede: piloto.id_sede || 1,
+      nombres: piloto.nombres || '',
+      apellidos: piloto.apellidos || '',
+      fe_nacimiento: piloto.fe_nacimiento || '',
+      direccion: piloto.direccion || '',
+      telefono: piloto.telefono || '',
+      num_dpi: piloto.num_dpi || '',
+      fe_vence_dpi: piloto.fe_vence_dpi || '',
+      num_licencia: piloto.num_licencia || '',
+      fe_vence_licencia: piloto.fe_vence_licencia || '',
+      observaciones: piloto.observaciones || ''
     });
     setFormErrors({});
-    setEditingVehicle(vehicle);
+    setEditingPiloto(piloto);
     setShowForm(true);
   };
 
   // Cerrar formulario
   const closeForm = () => {
     setShowForm(false);
-    setEditingVehicle(null);
+    setEditingPiloto(null);
     setFormData({
       id_empresa: 1,
       id_sede: 1,
-      marca_vehiculo: '',
-      placa_id: '',
-      modelo: '',
-      anio_vehiculo: new Date().getFullYear(),
-      tipo_vehiculo: '',
+      nombres: '',
+      apellidos: '',
+      fe_nacimiento: '',
+      direccion: '',
+      telefono: '',
+      num_dpi: '',
+      fe_vence_dpi: '',
+      num_licencia: '',
+      fe_vence_licencia: '',
+      viajes: '',
       estado: 'ACT',
-      color: '',
-      motor: '',
-      chasis: '',
-      kilometraje: '',
-      tipo_combustible: '',
-      capacidad_carga: '',
-      ultima_lectura: '',
-      observaciones: ''
+      observaciones: '',
+      fe_modificacion: ''
     });
     setFormErrors({});
   };
 
   // Guardar vehículo
-  const saveVehicle = async () => {
+  const savePiloto = async () => {
     if (!validateForm()) return;
 
     try {
       console.log('🚀 Guardando vehículo:', formData);
       
-      if (editingVehicle) {
+        if (editingPiloto) {
         // Actualizar
-        console.log('📝 Actualizando vehículo ID:', editingVehicle.id_vehiculo);
-        const response = await axiosInstance.put(API_CONFIG.VEHICULOS.UPDATE(editingVehicle.id_vehiculo), formData);
-        console.log('✅ Vehículo actualizado:', response.data);
+        console.log('📝 Actualizando piloto ID:', editingPiloto.id_piloto);
+        const response = await axiosInstance.put(API_CONFIG.PILOTOS.UPDATE(editingPiloto.id_piloto), formData);
+        console.log('✅ Piloto actualizado:', response.data);
         
         if (response.data.success) {
-          alert('Vehículo actualizado exitosamente');
-          await loadVehicles();
+          alert('Piloto actualizado exitosamente');
+          await loadPilotos();
           closeForm();
         }
       } else {
         // Crear nuevo
-        console.log('🆕 Creando nuevo vehículo');
+        console.log('🆕 Creando nuevo piloto');
         const response = await axiosInstance.post(API_CONFIG.VEHICULOS.CREATE, formData);
-        console.log('✅ Vehículo creado:', response.data);
+        console.log('✅ Piloto creado:', response.data);
         
         if (response.data.success) {
-          alert('Vehículo creado exitosamente');
-          await loadVehicles();
+          alert('Piloto creado exitosamente');
+          await loadPilotos();
           closeForm();
         }
       }
     } catch (error) {
-      console.error('❌ Error guardando vehículo:', error);
+      console.error('❌ Error guardando piloto:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -330,36 +328,36 @@ const Vehiculos = () => {
   };
 
   // Eliminar vehículo
-  const deleteVehicle = async (id) => {
+  const deletePiloto = async (id) => {
     try {
       const response = await axiosInstance.delete(API_CONFIG.VEHICULOS.DELETE(id));
       if (response.data.success) {
-        await loadVehicles();
+        await loadPilotos();
       }
     } catch (error) {
-      console.error('Error deleting vehicle:', error);
+      console.error('Error deleting piloto:', error);
     }
   };
 
   // Mostrar confirmación de eliminación
-  const showDeleteConfirmation = (vehicle) => {
-    setVehicleToDelete(vehicle);
+  const showDeleteConfirmation = (piloto) => {
+    setPilotoToDelete(piloto);
     setShowDeleteConfirm(true);
   };
 
   // Confirmar eliminación
   const confirmDelete = async () => {
-    if (vehicleToDelete) {
-      await deleteVehicle(vehicleToDelete.id_vehiculo);
+    if (pilotoToDelete) {
+      await deletePiloto(pilotoToDelete.id_piloto);
       setShowDeleteConfirm(false);
-      setVehicleToDelete(null);
+      setPilotoToDelete(null);
     }
   };
 
   // Cancelar eliminación
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
-    setVehicleToDelete(null);
+    setPilotoToDelete(null);
   };
 
   // Obtener color del estado
@@ -395,10 +393,10 @@ const Vehiculos = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              Catálogo de Vehículos
+              Catálogo de Pilotos
             </h1>
             <p className="text-slate-600">
-              Administra la información de todos los vehículos de la flota
+              Administra la información de todos los pilotos de la flota
             </p>
 
             {/* Aqui muestra el status de la API            */}
@@ -418,12 +416,12 @@ const Vehiculos = () => {
             {/* Aqui muestra el status de la conexión */}
             <div className="mt-2">
               <button
-                onClick={loadVehicles}
+                onClick={loadPilotos}
                 disabled={loading}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Cargando...' : 'Recargar Vehículos'}
+                {loading ? 'Cargando...' : 'Recargar Pilotos'}
               </button>
             </div>
 
@@ -454,7 +452,7 @@ const Vehiculos = () => {
             className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
           >
             <Plus className="h-4 w-4" />
-            <span>Nuevo Vehículo</span>
+            <span>Nuevo Piloto</span>
           </button>
         </div>
 
@@ -463,7 +461,7 @@ const Vehiculos = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-slate-900">
-                {editingVehicle ? 'Editar Vehículo' : 'Nuevo Vehículo'}
+                {editingPiloto ? 'Editar Piloto' : 'Nuevo Piloto'}
               </h2>
               <button
                 onClick={closeForm}
@@ -495,98 +493,98 @@ const Vehiculos = () => {
               </div>
 
 
-              {/* Marca */}
+              {/* Nombres */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Marca *
+                  Nombres *
                 </label>
                 <input
                   type="text"
-                  name="marca_vehiculo"
-                  value={formData.marca_vehiculo}
+                  name="nombres"
+                  value={formData.nombres}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.marca_vehiculo ? 'border-red-500' : ''}`}
-                  placeholder="Toyota"
+                  className={`input ${formErrors.nombres ? 'border-red-500' : ''}`}
+                  placeholder="Juan"
                 />
-                {formErrors.marca_vehiculo && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.marca_vehiculo}</p>
+                {formErrors.nombres && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.nombres}</p>
                 )}
               </div>
 
-              {/* Placa */}
+              {/* Apellidos */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Placa *
+                  Apellidos *
                 </label>
                 <input
                   type="text"
-                  name="placa_id"
-                  value={formData.placa_id}
+                    name="apellidos"
+                  value={formData.apellidos}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.placa_id ? 'border-red-500' : ''}`}
-                  placeholder="ABC-123"
+                  className={`input ${formErrors.apellidos ? 'border-red-500' : ''}`}
+                  placeholder="Perez"
                 />
-                {formErrors.placa_id && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.placa_id}</p>
+                {formErrors.apellidos && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.apellidos}</p>
                 )}
               </div>
 
 
 
-              {/* Modelo */}
+              {/* Fecha de Nacimiento */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Modelo *
+                  Fecha de Nacimiento *
                 </label>
                 <input
                   type="text"
-                  name="modelo"
-                  value={formData.modelo}
+                    name="fe_nacimiento"
+                  value={formData.fe_nacimiento}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.modelo ? 'border-red-500' : ''}`}
-                  placeholder="Hilux"
+                  className={`input ${formErrors.fe_nacimiento ? 'border-red-500' : ''}`}
+                  placeholder="2000-01-01"
                 />
-                {formErrors.modelo && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.modelo}</p>
+                {formErrors.fe_nacimiento && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_nacimiento}</p>
                 )}
               </div>
 
-              {/* Año */}
+              {/* Dirección */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Año *
+                  Dirección *
                 </label>
                 <input
                   type="number"
-                  name="anio_vehiculo"
-                  value={formData.anio_vehiculo}
+                  name="direccion"
+                  value={formData.direccion}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.anio_vehiculo ? 'border-red-500' : ''}`}
+                  className={`input ${formErrors.direccion ? 'border-red-500' : ''}`}
                   min="1900"
                   max={new Date().getFullYear() + 1}
                 />
-                {formErrors.anio_vehiculo && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.anio_vehiculo}</p>
+                {formErrors.direccion && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.direccion}</p>
                 )}
               </div>
 
-              {/* Tipo de Vehículo */}
+              {/* Teléfono */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tipo de Vehículo *
+                  Teléfono *
                 </label>
                 <select
-                  name="tipo_vehiculo"
-                  value={formData.tipo_vehiculo}
+                  name="telefono"
+                  value={formData.telefono}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.tipo_vehiculo ? 'border-red-500' : ''}`}
+                  className={`input ${formErrors.telefono ? 'border-red-500' : ''}`}
                 >
                   <option value="">Seleccionar tipo</option>
                   {tiposVehiculo.map(tipo_vehiculo => (
                     <option key={tipo_vehiculo} value={tipo_vehiculo}>{tipo_vehiculo}</option>
                   ))}
                 </select>
-                {formErrors.tipo_vehiculo && (
+                {formErrors.telefono && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.tipo_vehiculo}</p>
                 )}
               </div>
@@ -750,11 +748,11 @@ const Vehiculos = () => {
                 Cancelar
               </button>
               <button
-                onClick={saveVehicle}
+                onClick={savePiloto}
                 className="btn-primary flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
-                <span>{editingVehicle ? 'Actualizar' : 'Guardar'}</span>
+                <span>{editingPiloto ? 'Actualizar' : 'Guardar'}</span>
               </button>
             </div>
           </div>
@@ -768,7 +766,7 @@ const Vehiculos = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por placa, marca, modelo..."
+                placeholder="Buscar por piloto, apellidos, nombres..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input pl-10"
@@ -800,7 +798,7 @@ const Vehiculos = () => {
             </select>
 
             <button
-              onClick={loadVehicles}
+              onClick={loadPilotos}
               className="btn-secondary flex items-center space-x-2"
             >
               <RefreshCw className="h-4 w-4" />
@@ -808,13 +806,13 @@ const Vehiculos = () => {
                   </button>
               </div>
 
-          {/* Tabla de vehículos */}
+          {/* Tabla de pilotos */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Vehículo
+                    Piloto
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Especificaciones
@@ -836,75 +834,75 @@ const Vehiculos = () => {
                     <td colSpan="5" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
-                        <span className="text-sm font-medium text-gray-900">Cargando vehículos...</span>
+                        <span className="text-sm font-medium text-gray-900">Cargando pilotos...</span>
                         <span className="text-xs text-gray-500">Verificando conexión con el servidor...</span>
                       </div>
                     </td>
                   </tr>
-                ) : filteredVehicles.length === 0 ? (
+                ) : filteredPilotos.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        <Truck className="h-12 w-12 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">No se encontraron vehículos</span>
-                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar un nuevo vehículo</span>
+                        <User className="h-12 w-12 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900">No se encontraron pilotos</span>
+                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar un nuevo piloto</span>
                         <button
                           onClick={openNewForm}
                           className="mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Agregar Vehículo
+                          Agregar Piloto
                         </button>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredVehicles.map((vehicle) => (
-                    <tr key={vehicle.id_vehiculo} className="hover:bg-slate-50">
+                  filteredPilotos.map((piloto) => (
+                    <tr key={piloto.id_piloto} className="hover:bg-slate-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
                             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                              {vehicle.tipo_vehiculo === 'Motocicleta' ? <Bike className="h-6 w-6 text-red-800" /> : <Truck className="h-6 w-6 text-blue-600 fill-blue-600" />}
+                              <User className="h-6 w-6 text-blue-600 fill-blue-600" />
                 </div>
               </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-slate-900">
-                              {vehicle.placa_id}
+                              {piloto.nombres} {piloto.apellidos}
                 </div>
                             <div className="text-sm text-slate-500">
-                              {vehicle.marca_vehiculo} {vehicle.modelo}
+                              {piloto.num_dpi}
                 </div>
               </div>
                 </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-slate-900">
-                          <div>Año: {vehicle.anio_vehiculo }</div>
-                          <div>Tipo: {vehicle.tipo_vehiculo}</div>
-                          {vehicle.color && <div>Color: {vehicle.color}</div>}
-                          {vehicle.kilometraje && <div>KM: {vehicle.kilometraje.toLocaleString()}</div>}
+                          <div>DPI: {piloto.num_dpi }</div>
+                          <div>Licencia: {piloto.num_licencia}</div>
+                         {/* {vehicle.color && <div>Color: {vehicle.color}</div>} */}
+                         {/* {vehicle.kilometraje && <div>KM: {vehicle.kilometraje.toLocaleString()}</div>} */}
                 </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(vehicle.estado)}`}>
-                          {getStatusText(vehicle.estado)}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(piloto.estado)}`}>
+                          {getStatusText(piloto.estado)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {vehicle.fe_registro ? new Date(vehicle.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
+                      {piloto.fe_registro ? new Date(piloto.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
-                            onClick={() => openEditForm(vehicle)}
+                            onClick={() => openEditForm(piloto)}
                             className="text-blue-600 hover:text-blue-900 p-1"
                             title="Editar"
                           >
                   <Edit className="h-4 w-4" />
                 </button>
                           <button
-                            onClick={() => showDeleteConfirmation(vehicle)}
+                            onClick={() => showDeleteConfirmation(piloto)}
                             className="text-red-600 hover:text-red-900 p-1"
                             title="Eliminar"
                           >
@@ -921,7 +919,7 @@ const Vehiculos = () => {
 
           {/* Información de registros */}
           <div className="mt-4 text-sm text-slate-500">
-            Mostrando {filteredVehicles.length} de {vehicles.length} vehículos
+            Mostrando {filteredPilotos.length} de {pilotos.length} pilotos
             </div>
           </div>
       </main>
@@ -934,7 +932,7 @@ const Vehiculos = () => {
               Confirmar Eliminación
             </h3>
             <p className="text-slate-700 mb-6">
-              ¿Estás seguro de que quieres eliminar el vehículo "{vehicleToDelete?.placa}"?
+              ¿Estás seguro de que quieres eliminar el piloto "{pilotoToDelete?.id_piloto}"?
               Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end space-x-3">
@@ -958,4 +956,4 @@ const Vehiculos = () => {
   );
 };
 
-export default Vehiculos; 
+export default Pilotos; 

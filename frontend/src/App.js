@@ -8,6 +8,7 @@ import MainDashboard from './pages/MainDashboard';
 import Dashboard from './pages/Dashboard';
 import CatalogosIndex from './pages/catalogos/CatalogosIndex';
 import Vehiculos from './pages/catalogos/Vehiculos';
+import Pilotos from './pages/catalogos/Pilotos';
 import UsuariosRoles from './pages/seguridad/UsuariosRoles';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -52,6 +53,10 @@ function App() {
         <Route 
           path="/catalogos/vehiculos" 
           element={isAuthenticated ? <Vehiculos /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/catalogos/pilotos" 
+          element={isAuthenticated ? <Pilotos /> : <Navigate to="/login" />} 
         />
         {/* Rutas de Seguridad */}
         <Route 
