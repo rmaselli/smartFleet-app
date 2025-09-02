@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
 const vehiculosRoutes = require('./routes/vehiculos');
+const pilotosRoutes = require('./routes/pilotos');
 const { initDatabase } = require('./config/database');
 const serverConfig = require('./config/server');
 
@@ -46,6 +47,7 @@ app.use(morgan(serverConfig.logging.format));
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/vehiculos', vehiculosRoutes);
+app.use('/api/pilotos', pilotosRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -64,7 +64,7 @@ const Vehiculos = () => {
     kilometraje: '',
     tipo_combustible: '',
     capacidad_carga: '',
-    ultima_lectura: '',
+    //ultima_lectura: '',
     observaciones: ''
   });
 
@@ -102,6 +102,12 @@ const Vehiculos = () => {
     'Híbrido',
     'Gas Natural',
     'Otro'
+  ];
+
+  // Control de servicio
+  const controlServicio = [
+    'Kilometraje',
+    'Tiempo'
   ];
 
   // Cargar vehículos
@@ -168,7 +174,7 @@ const Vehiculos = () => {
   const validateForm = () => {
     const errors = {};
     
-    if (!formData.id_sede.trim()) errors.id_sede = 'La sede es requerida';
+    if (!formData.id_sede) errors.id_sede = 'La sede es requerida';
     if (!formData.placa_id.trim()) errors.placa_id = 'La placa es requerida';
     if (!formData.marca_vehiculo.trim()) errors.marca_vehiculo = 'La marca es requerida';
     if (!formData.modelo.trim()) errors.modelo = 'El modelo es requerido';
@@ -482,7 +488,7 @@ const Vehiculos = () => {
                   Sede *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="id_sede"
                   value={formData.id_sede}
                   onChange={handleFormChange}
@@ -674,6 +680,42 @@ const Vehiculos = () => {
                 />
               </div>
 
+              {/* Control de servicio */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Control de servicio
+                </label>
+                <select
+                  name="control_servicio"
+                  value={formData.control_servicio}
+                  onChange={handleFormChange}
+                  className="input"
+                >
+                  <option  defaultValue={controlServicio[0]} value={controlServicio[0]}>Kilometraje</option>
+                  {controlServicio.map(control_servicio => (
+                    <option key={control_servicio} value={control_servicio}>{control_servicio}</option>
+                  ))}
+                </select>
+              </div>
+
+
+              {/* Piloto */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Piloto
+                </label>
+                <input
+                  type="number"
+                  name="id_piloto"
+                  value={formData.id_piloto}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="1"
+                  min="1"
+                />
+              </div>
+
+              
               {/* Combustible */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -707,6 +749,20 @@ const Vehiculos = () => {
                 />
               </div>
 
+              {/* Umbral de Servicio */}
+              <div>
+                <label className="block text-red-500 text-sm font-medium text-slate-700 mb-2">
+                  % Umbral de Servicio
+                </label>
+                <input
+                  type="number"
+                  name="umbral_servicio"
+                  value={formData.umbral_servicio}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="95"
+                />
+              </div>
 
               {/* Ultima Lectura */}
               <div>
@@ -723,7 +779,42 @@ const Vehiculos = () => {
                   readOnly
                 />
               </div>
+
+              {/* Ultimo KM Taller */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Ultimo KM Taller
+                  </label>
+                <input
+                  type="number"
+                  name="ultimo_km_taller"
+                  value={formData.ultimo_km_taller}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="1000"
+                  readOnly
+                />
+              </div>
+
+
+              {/* Ultimo Servicio Taller */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Ultimo Servicio Taller
+                  </label>
+                <input
+                  type="number"
+                  name="ultimo_servicio_taller"
+                  value={formData.ultimo_servicio_taller}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="1000"
+                  readOnly
+                />
+              </div>
+
             </div>
+
 
 
             {/* Observaciones */}

@@ -62,7 +62,7 @@ const Pilotos = () => {
     fe_vence_dpi: '',
     num_licencia: '',
     fe_vence_licencia: '',
-    viajes: '',
+    //viajes: '',
     estado: 'ACT',
     observaciones: ''
   });
@@ -78,9 +78,11 @@ const Pilotos = () => {
   // Estados disponibles
   const estados = [
     { value: 'ACT', label: 'Activo' },
-    { value: 'MNT', label: 'En Mantenimiento' },
-    { value: 'INA', label: 'Inactivo' },
-    { value: 'REP', label: 'En Reparación' }
+    { value: 'SUP', label: 'Suplente' },
+    { value: 'TMP', label: 'Temporal' },
+    { value: 'MED', label: 'Suspension Medica' },
+    { value: 'RET', label: 'Retiro' },
+    { value: 'TER', label: 'Terminado' }
   ];
 
   // Tipos de vehículo
@@ -90,7 +92,7 @@ const Pilotos = () => {
     'Furgón',
     'Sedán',
     'SUV',
-    'Motocicleta',
+    'Motocicleta', 
     'Otro'
   ];
 
@@ -154,21 +156,21 @@ const Pilotos = () => {
 
   // Filtrar pilotos
   const filteredPilotos = pilotos.filter(piloto => {
-    const matchesSearch = piloto.id_piloto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = piloto.num_dpi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          piloto.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          piloto.nombres?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || piloto.estado === filterStatus;
-    const matchesType = filterType === 'all' || piloto.tipo_vehiculo === filterType;
+    //const matchesType = filterType === 'all' || piloto.tipo_vehiculo === filterType;
     
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus;// && matchesType;
   });
 
   // Validar formulario
   const validateForm = () => {
     const errors = {};
     
-    if (!formData.id_sede.trim()) errors.id_sede = 'La sede es requerida';
+    if (!formData.id_sede) errors.id_sede = 'La sede es requerida';
     if (!formData.nombres.trim()) errors.nombres = 'Los nombres son requeridos';
     if (!formData.apellidos.trim()) errors.apellidos = 'Los apellidos son requeridos';
     if (!formData.fe_nacimiento.trim()) errors.fe_nacimiento = 'La fecha de nacimiento es requerida';
@@ -178,7 +180,6 @@ const Pilotos = () => {
     if (!formData.fe_vence_dpi.trim()) errors.fe_vence_dpi = 'La fecha de vencimiento del DPI es requerida';
     if (!formData.num_licencia.trim()) errors.num_licencia = 'El número de licencia es requerido';
     if (!formData.fe_vence_licencia.trim()) errors.fe_vence_licencia = 'La fecha de vencimiento de la licencia es requerida';
-    if (!formData.viajes.trim()) errors.viajes = 'Los viajes son requeridos';
     if (!formData.estado) errors.estado = 'El estado es requerido';
     
     setFormErrors(errors);
@@ -216,7 +217,7 @@ const Pilotos = () => {
       fe_vence_dpi: '',
       num_licencia: '',
       fe_vence_licencia: '',
-      viajes: '',
+      //viajes: '',
       estado: 'ACT',
       observaciones: ''      
     });
@@ -262,20 +263,20 @@ const Pilotos = () => {
       fe_vence_dpi: '',
       num_licencia: '',
       fe_vence_licencia: '',
-      viajes: '',
+      //viajes: '',
       estado: 'ACT',
-      observaciones: '',
-      fe_modificacion: ''
+      observaciones: ''
     });
     setFormErrors({});
   };
 
-  // Guardar vehículo
+  // Guardar piloto
   const savePiloto = async () => {
+    console.log('<<Entra>>', formData);
     if (!validateForm()) return;
 
     try {
-      console.log('🚀 Guardando vehículo:', formData);
+      console.log('🚀 Guardando piloto:', formData);
       
         if (editingPiloto) {
         // Actualizar
@@ -291,7 +292,7 @@ const Pilotos = () => {
       } else {
         // Crear nuevo
         console.log('🆕 Creando nuevo piloto');
-        const response = await axiosInstance.post(API_CONFIG.VEHICULOS.CREATE, formData);
+        const response = await axiosInstance.post(API_CONFIG.PILOTOS.CREATE, formData);
         console.log('✅ Piloto creado:', response.data);
         
         if (response.data.success) {
@@ -330,7 +331,7 @@ const Pilotos = () => {
   // Eliminar vehículo
   const deletePiloto = async (id) => {
     try {
-      const response = await axiosInstance.delete(API_CONFIG.VEHICULOS.DELETE(id));
+      const response = await axiosInstance.delete(API_CONFIG.PILOTOS.DELETE(id));
       if (response.data.success) {
         await loadPilotos();
       }
@@ -365,12 +366,16 @@ const Pilotos = () => {
     switch (status) {
       case 'ACT':
         return 'bg-green-100 text-green-800';
-      case 'MNT':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'INA':
+      case 'SUP':
+        return 'bg-yellow-100 text-purple-800';
+      case 'TMP':
         return 'bg-red-100 text-red-800';
-      case 'REP':
-        return 'bg-orange-100 text-orange-800';
+      case 'TER':
+        return 'bg-orange-100 text-red-800';
+      case 'MED':
+        return 'bg-orange-100 text-yellow-800';
+      case 'RET':
+        return 'bg-orange-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -480,7 +485,7 @@ const Pilotos = () => {
                   Sede *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="id_sede"
                   value={formData.id_sede}
                   onChange={handleFormChange}
@@ -536,14 +541,18 @@ const Pilotos = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Fecha de Nacimiento *
                 </label>
-                <input
-                  type="text"
+                <div className="relative">
+                  <input
+                    type="date"
                     name="fe_nacimiento"
-                  value={formData.fe_nacimiento}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.fe_nacimiento ? 'border-red-500' : ''}`}
-                  placeholder="2000-01-01"
-                />
+                    value={formData.fe_nacimiento}
+                    onChange={handleFormChange}
+                    dateFormat="dd/mm/yyyy"
+                    className={`input ${formErrors.fe_nacimiento ? 'border-red-500' : ''} pr-10`}
+                    max={new Date().toISOString().split('T')[0]} // No permitir fechas futuras
+                  />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
                 {formErrors.fe_nacimiento && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.fe_nacimiento}</p>
                 )}
@@ -555,13 +564,11 @@ const Pilotos = () => {
                   Dirección *
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="direccion"
                   value={formData.direccion}
                   onChange={handleFormChange}
                   className={`input ${formErrors.direccion ? 'border-red-500' : ''}`}
-                  min="1900"
-                  max={new Date().getFullYear() + 1}
                 />
                 {formErrors.direccion && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.direccion}</p>
@@ -573,19 +580,93 @@ const Pilotos = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Teléfono *
                 </label>
-                <select
+                <input
+                  type="text"
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleFormChange}
                   className={`input ${formErrors.telefono ? 'border-red-500' : ''}`}
-                >
-                  <option value="">Seleccionar tipo</option>
-                  {tiposVehiculo.map(tipo_vehiculo => (
-                    <option key={tipo_vehiculo} value={tipo_vehiculo}>{tipo_vehiculo}</option>
-                  ))}
-                </select>
+                />
                 {formErrors.telefono && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.tipo_vehiculo}</p>
+                  <p className="text-red-500 text-sm mt-1">{formErrors.telefono}</p>
+                )}
+              </div>
+
+              {/* DPI */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  DPI *
+                </label>
+                <input
+                  type="text"
+                  name="num_dpi"
+                  value={formData.num_dpi}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.num_dpi ? 'border-red-500' : ''}`}
+                />
+                {formErrors.num_dpi && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.num_dpi}</p>
+                )}
+              </div>
+
+              {/* Fecha de Vencimiento del DPI */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Vencimiento DPI *
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="fe_vence_dpi"
+                    value={formData.fe_vence_dpi}
+                    onChange={handleFormChange}
+                    dateFormat="dd/mm/yyyy"
+                    className={`input ${formErrors.fe_vence_dpi ? 'border-red-500' : ''} pr-10`}
+                    min={new Date().toISOString().split('T')[0]} // No permitir fechas pasadas
+                  />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
+                {formErrors.fe_vence_dpi && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_vence_dpi}</p>
+                )}
+              </div>
+
+              {/* Numero de Licencia */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Licencia *
+                </label>
+                <input
+                  type="text"
+                  name="num_licencia"
+                  value={formData.num_licencia}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.num_licencia ? 'border-red-500' : ''}`}
+                />
+                {formErrors.num_licencia && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.num_dpi}</p>
+                )}
+              </div>
+
+              {/* Fecha de Vencimiento de la Licencia */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Vencimiento Licencia *
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="fe_vence_licencia"
+                    value={formData.fe_vence_licencia}
+                    onChange={handleFormChange}
+                    dateFormat="DD/MM/YYYY"
+                    className={`input ${formErrors.fe_vence_licencia ? 'border-red-500' : ''} pr-10`}
+                    min={new Date().toISOString().split('T')[0]} // No permitir fechas pasadas
+                  />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
+                {formErrors.fe_vence_licencia && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_vence_licencia}</p>
                 )}
               </div>
 
@@ -611,116 +692,24 @@ const Pilotos = () => {
                 )}
               </div>
 
-              {/* Color */}
+              {/* Viajes */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Color
-                </label>
-                <input
-                  type="text"
-                  name="color"
-                  value={formData.color}
-                  onChange={handleFormChange}
-                  className="input"
-                  placeholder="Blanco"
-                />
-              </div>
-
-              {/* Motor */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Motor
-                </label>
-                <input
-                  type="text"
-                  name="motor"
-                  value={formData.motor}
-                  onChange={handleFormChange}
-                  className="input"
-                  placeholder="2.4L"
-                />
-              </div>
-
-              {/* Chasis */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Chasis
-                </label>
-                <input
-                  type="text"
-                  name="chasis"
-                  value={formData.chasis}
-                  onChange={handleFormChange}
-                  className="input"
-                  placeholder="Número de chasis"
-                />
-              </div>
-
-              {/* Kilometraje */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Kilometraje
+                  Viajes
                 </label>
                 <input
                   type="number"
-                  name="kilometraje"
-                  value={formData.kilometraje}
+                  name="viajes"
+                  value={formData.viajes || 0}
                   onChange={handleFormChange}
                   className="input"
-                  placeholder="0"
+                  readOnly
                   min="0"
                 />
               </div>
 
-              {/* Combustible */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Combustible
-                </label>
-                <select
-                  name="tipo_combustible"
-                  value={formData.tipo_combustible}
-                  onChange={handleFormChange}
-                  className="input"
-                >
-                  <option value="">Seleccionar combustible</option>
-                  {combustibles.map(tipo_combustible => (
-                    <option key={tipo_combustible} value={tipo_combustible}>{tipo_combustible}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Capacidad de Carga */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Capacidad de Carga
-                </label>
-                <input
-                  type="text"
-                  name="capacidad_carga"
-                  value={formData.capacidad_carga}
-                  onChange={handleFormChange}
-                  className="input"
-                  placeholder="1000 kg"
-                />
-              </div>
 
 
-              {/* Ultima Lectura */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Ultima Lectura
-                  </label>
-                <input
-                  type="number"
-                  name="ultima_lectura"
-                  value={formData.ultima_lectura}
-                  onChange={handleFormChange}
-                  className="input"
-                  placeholder="1000"
-                  readOnly
-                />
-              </div>
             </div>
 
 
@@ -766,7 +755,7 @@ const Pilotos = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por piloto, apellidos, nombres..."
+                placeholder="Buscar por DPI, apellidos, nombres..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input pl-10"

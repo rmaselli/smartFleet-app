@@ -69,11 +69,9 @@ router.post('/', auth, [
   body('fe_vence_dpi').notEmpty().trim().escape(),
   body('num_licencia').notEmpty().trim().escape(),
   body('fe_vence_licencia').notEmpty().trim().escape(),
-  body('viajes').notEmpty().trim().escape(),
   body('estado').notEmpty().trim().escape(),
   body('observaciones').optional().trim().escape()
-  ]
- , async (req, res) => {
+], async (req, res) => {
   try {
     // Validar campos
     const errors = validationResult(req);
@@ -96,36 +94,48 @@ router.post('/', auth, [
       fe_vence_dpi,
       num_licencia,
       fe_vence_licencia,
-      viajes,
       estado,
       observaciones
     } = req.body;
- 
 
-    // Verificar si el piloto ya existe
+    // Verificar si el piloto ya existe por DPI
     const [existingPilotos] = await pool.execute(
-      'SELECT id_piloto FROM FLVEHI.FLVEH_M004 WHERE id_piloto = ?',
-      [id_piloto]
+      'SELECT id_piloto FROM FLVEHI.FLVEH_M004 WHERE num_dpi = ?',
+      [num_dpi]
     );
 
     if (existingPilotos.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Ya existe un piloto con ese ID'
+        error: 'Ya existe un piloto con ese número de DPI'
       });
     }
 
+    console.log('<<Entra antes del insert>>', req.body);
+    
     // Insertar nuevo piloto
     const [result] = await pool.execute(
       `INSERT INTO FLVEHI.FLVEH_M004 (
-        id_empresa, id_sede, nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, viajes, estado, fe_registro, observaciones, fe_modificacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP)`,
+        id_empresa, id_sede, nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, estado, observaciones, fe_registro, fe_modificacion, viajes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)`,
       [
-        id_empresa || 1, id_sede || 1,  nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, viajes, estado, fe_registro, fe_modificacion
+        id_empresa || 1, 
+        id_sede || 1,  
+        nombres, 
+        apellidos, 
+        fe_nacimiento, 
+        direccion, 
+        telefono, 
+        num_dpi, 
+        fe_vence_dpi, 
+        num_licencia, 
+        fe_vence_licencia,  
+        estado, 
+        observaciones
       ]
     );
 
-    // Obtener el vehículo creado
+    // Obtener el piloto creado
     const [newPiloto] = await pool.execute(
       'SELECT * FROM FLVEHI.FLVEH_M004 WHERE id_piloto = ?',
       [result.insertId]
@@ -133,7 +143,7 @@ router.post('/', auth, [
 
     res.status(201).json({
       success: true,
-      message: 'Vehículo creado exitosamente',
+      message: 'Piloto creado exitosamente',
       data: newPiloto[0]
     });
 
@@ -146,7 +156,7 @@ router.post('/', auth, [
   }
 });
 
-// PUT - Actualizar vehículo
+// PUT - Actualizar piloto
 router.put('/:id', auth, [
   body('id_empresa').notEmpty().trim().escape(),
   body('id_sede').notEmpty().trim().escape(),
@@ -159,7 +169,7 @@ router.put('/:id', auth, [
   body('fe_vence_dpi').notEmpty().trim().escape(),
   body('num_licencia').notEmpty().trim().escape(),
   body('fe_vence_licencia').notEmpty().trim().escape(),
-  body('viajes').notEmpty().trim().escape(),
+  //body('viajes').notEmpty().trim().escape(),
   body('estado').notEmpty().trim().escape(),
   body('observaciones').notEmpty().trim().escape(),
   body('fe_modificacion').notEmpty().trim().escape()
@@ -189,22 +199,21 @@ router.put('/:id', auth, [
       fe_vence_dpi,
       num_licencia,
       fe_vence_licencia,
-      viajes,
+      //viajes,
       estado,
-      observaciones,
-      fe_modificacion
+      observaciones
     } = req.body;
 
-    // Verificar si el piloto ya existe en otro vehículo
+    // Verificar si el piloto ya existe con otro DPI
     const [existingPilotos] = await pool.execute(
-      'SELECT id_piloto FROM FLVEHI.FLVEH_M001 WHERE id_piloto = ? AND id_piloto != ?',
-      [id_piloto, id]
+      'SELECT id_piloto FROM FLVEHI.FLVEH_M004 WHERE num_dpi = ? AND id_piloto != ?',
+      [num_dpi, id]
     );
 
     if (existingPilotos.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Ya existe otro piloto con ese ID'
+        error: 'Ya existe otro piloto con ese número de DPI'
       });
     }
 
@@ -224,11 +233,11 @@ router.put('/:id', auth, [
     // Actualizar piloto
     await pool.execute(
       `UPDATE FLVEHI.FLVEH_M004 SET 
-        nombres = ?, apellidos = ?, fe_nacimiento = ?, direccion = ?, telefono = ?, num_dpi = ?, fe_vence_dpi = ?, num_licencia = ?, fe_vence_licencia = ?, viajes = ?, estado = ?, observaciones = ?, 
+        nombres = ?, apellidos = ?, fe_nacimiento = ?, direccion = ?, telefono = ?, num_dpi = ?, fe_vence_dpi = ?, num_licencia = ?, fe_vence_licencia = ?,  estado = ?, observaciones = ?, 
         fe_modificacion = CURRENT_TIMESTAMP
       WHERE id_piloto = ? AND id_empresa = ? AND id_sede = ?`,
       [
-        nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, viajes, estado, observaciones, id, id_empresa, id_sede
+        nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, estado, observaciones, id, id_empresa, id_sede
       ]
     );
 
@@ -296,7 +305,7 @@ router.delete('/:id', auth, async (req, res) => {
 router.get('/search/filters', auth, async (req, res) => {
   try {
     const { 
-      id_piloto, 
+      num_dpi, 
       nombres, 
       apellidos
       //estado, 
@@ -307,9 +316,9 @@ router.get('/search/filters', auth, async (req, res) => {
     let query = 'SELECT * FROM FLVEHI.FLVEH_M004 WHERE 1=1';
     let params = [];
 
-    if (id_piloto) {
-      query += ' AND id_piloto LIKE ?';
-      params.push(`%${id_piloto}%`);
+    if (num_dpi) {
+      query += ' AND num_dpi LIKE ?';
+      params.push(`%${num_dpi}%`);
     }
 
     if (nombres) {
@@ -338,7 +347,7 @@ router.get('/search/filters', auth, async (req, res) => {
     //  params.push(id_empresa);
     //}
 
-    query += ' ORDER BY id_piloto DESC';
+    query += ' ORDER BY num_dpi DESC';
 
     const [pilotos] = await pool.execute(query, params);
 

@@ -71,8 +71,14 @@ router.post('/', auth, [
   body('tipo_combustible').optional().trim().escape(),
   body('capacidad_carga').optional().trim().escape(),
   body('kilometraje').optional().trim().escape(),
+  body('control_servicio').optional().trim().escape(),
+  body('id_piloto').optional().trim().escape(),
   body('estado').notEmpty().trim().escape(),
-  body('ultima_lectura').optional().trim().escape(),
+  //body('ultima_lectura').optional().isInt({ min: 1 }),
+  //body('ultimo_km_taller').optional().isInt({ min: 1 }),
+  //body('ultimo_servicio_taller').optional().trim().escape(),
+  body('umbral_servicio').optional().trim().escape(),
+  //body('fe_registro').notEmpty().trim().escape(),
   body('observaciones').optional().trim().escape()
   ]
  , async (req, res) => {
@@ -100,8 +106,13 @@ router.post('/', auth, [
       tipo_combustible,
       capacidad_carga,
       kilometraje,
+      control_servicio,
+      id_piloto,
       estado,
-      ultima_lectura,
+      //ultima_lectura,
+      //ultimo_km_taller,
+      //ultimo_servicio_taller,
+      umbral_servicio,
       observaciones
     } = req.body;
 
@@ -121,12 +132,12 @@ router.post('/', auth, [
     // Insertar nuevo vehículo
     const [result] = await pool.execute(
       `INSERT INTO FLVEHI.FLVEH_M001 (
-        id_empresa, id_sede, marca_vehiculo, placa_id,  modelo, anio_vehiculo, tipo_vehiculo, estado, color, motor, chasis, kilometraje, tipo_combustible, capacidad_carga, ultima_lectura, observaciones, fe_registro, fe_modificacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        id_empresa, id_sede, marca_vehiculo, placa_id,  modelo, anio_vehiculo, tipo_vehiculo, estado, color, motor, chasis, kilometraje, control_servicio, id_piloto, tipo_combustible, capacidad_carga, ultima_lectura, ultimo_km_taller, ultimo_servicio_taller, umbral_servicio, observaciones, fe_registro, fe_modificacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [
         id_empresa || 1, id_sede || 1,  marca_vehiculo, placa_id, modelo, anio_vehiculo, tipo_vehiculo, estado, 
-        color || null, motor || null, chasis || null, kilometraje || 0,
-        tipo_combustible || null, capacidad_carga || null, ultima_lectura || null,
+        color || null, motor || null, chasis || null, kilometraje || 0, control_servicio || null, id_piloto || null,
+        tipo_combustible || null, capacidad_carga || null, 0, 0 , null, umbral_servicio || 0,
         observaciones || null
       ]
     );
@@ -164,9 +175,11 @@ router.put('/:id', auth, [
   body('motor').notEmpty().trim().escape(),
   body('chasis').notEmpty().trim().escape(),
   body('kilometraje').notEmpty().trim().escape(),
+  body('control_servicio').optional().trim().escape(),
+  body('id_piloto').optional().trim().escape(),
   body('combustible').notEmpty().trim().escape(),
   body('capacidad_carga').notEmpty().trim().escape(),
-  body('ultima_lectura').notEmpty().trim().escape(),
+  body('umbral_servicio').notEmpty().trim().escape(),
   body('observaciones').notEmpty().trim().escape(),
   body('tipo_vehiculo').notEmpty().trim().escape(),
   body('estado').notEmpty().trim().escape(),
@@ -197,6 +210,8 @@ router.put('/:id', auth, [
       motor,
       chasis,
       kilometraje,
+      control_servicio,
+      id_piloto,
       tipo_combustible,
       capacidad_carga,
       ultima_lectura,
@@ -233,14 +248,14 @@ router.put('/:id', auth, [
     await pool.execute(
       `UPDATE FLVEHI.FLVEH_M001 SET 
         placa_id = ?, marca_vehiculo = ?, modelo = ?, anio_vehiculo = ?, tipo_vehiculo = ?, 
-        estado = ?, color = ?, motor = ?, chasis = ?, kilometraje = ?,
-        tipo_combustible = ?, capacidad_carga = ?, ultima_lectura = ?, observaciones = ?, 
+        estado = ?, color = ?, motor = ?, chasis = ?, kilometraje = ?,  control_servicio = ?, id_piloto = ?,
+        tipo_combustible = ?, capacidad_carga = ?,  observaciones = ?, 
         fe_modificacion = CURRENT_TIMESTAMP
       WHERE id_vehiculo = ? AND id_empresa = ? AND id_sede = ?`,
       [
         placa_id, marca_vehiculo , modelo, anio_vehiculo, tipo_vehiculo, estado, color, motor,
-        chasis, kilometraje, tipo_combustible, capacidad_carga, ultima_lectura,
-        observaciones, id, id_empresa, id_sede
+        chasis, kilometraje, control_servicio, id_piloto, tipo_combustible, capacidad_carga,
+        observaciones
       ]
     );
 
