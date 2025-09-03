@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard';
 import CatalogosIndex from './pages/catalogos/CatalogosIndex';
 import Vehiculos from './pages/catalogos/Vehiculos';
 import Pilotos from './pages/catalogos/Pilotos';
+import Sedes from './pages/catalogos/Sedes';
+import Clientes from './pages/catalogos/Clientes';
 import UsuariosRoles from './pages/seguridad/UsuariosRoles';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -58,6 +60,15 @@ function App() {
           path="/catalogos/pilotos" 
           element={isAuthenticated ? <Pilotos /> : <Navigate to="/login" />} 
         />
+        <Route 
+          path="/catalogos/sedes" 
+          element={isAuthenticated ? <Sedes /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/catalogos/clientes" 
+          element={isAuthenticated ? <Clientes /> : <Navigate to="/login" />} 
+        />
+
         {/* Rutas de Seguridad */}
         <Route 
           path="/seguridad/usuarios-roles" 

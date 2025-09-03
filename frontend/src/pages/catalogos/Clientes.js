@@ -36,33 +36,35 @@ import API_CONFIG from '../../config/api';
 import { getEnvConfig } from '../../config/environment';
 
 
-const Pilotos = () => {
+const Clientes = () => {
   const { user } = useAuth();
-  const [pilotos, setPilotos] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingPiloto, setEditingPiloto] = useState(null);
+  const [editingCliente, setEditingCliente] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [pilotoToDelete, setPilotoToDelete] = useState(null);
+  const [clienteToDelete, setClienteToDelete] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
     id_empresa: 1,
-    id_sede: 1,
-    nombres: '',
-    placa_id: '',
-    apellidos: '',
-    fe_nacimiento: '',
+    cod_cliente: 1,
+    cod_alterno: '',
+    cod_abreviado: '',
+    tipo_cliente: '',
+    nombre: '',
+    razon_social: '',
+    nit: '',
     direccion: '',
+    email: '',
     telefono: '',
-    num_dpi: '',
-    fe_vence_dpi: '',
-    num_licencia: '',
-    fe_vence_licencia: '',
-    //viajes: '',
+    contacto1: '',
+    contacto2: '',
+    tel_contacto1: '',
+    tel_contacto2: '',
     estado: 'ACT',
     observaciones: ''
   });
@@ -72,27 +74,22 @@ const Pilotos = () => {
   const breadcrumbItems = [
     { id: 'catalogos', label: 'Catálogos', path: '/catalogos' },
     //{ id: 'vehiculos', label: 'Vehículos', path: '/catalogos/vehiculos' },
-    { id: 'pilotos', label: 'Pilotos', path: '/catalogos/pilotos' }
+    { id: 'clientes', label: 'Clientes', path: '/catalogos/clientes' }
   ];
 
   // Estados disponibles
   const estados = [
     { value: 'ACT', label: 'Activo' },
-    { value: 'SUP', label: 'Suplente' },
-    { value: 'TMP', label: 'Temporal' },
-    { value: 'MED', label: 'Suspension Medica' },
-    { value: 'RET', label: 'Retiro' },
+    { value: 'SUS', label: 'Suspendido' },
+    { value: 'CAN', label: 'Cancelado' },
+    { value: 'BLQ', label: 'Bloqueado' },
     { value: 'TER', label: 'Terminado' }
   ];
 
-  // Tipos de vehículo
-  const tiposVehiculo = [
-    'Pickup',
-    'Camión',
-    'Furgón',
-    'Sedán',
-    'SUV',
-    'Motocicleta', 
+  // Tipos de cliente
+  const tiposCliente = [
+    'Taller',
+    'Flotilla',
     'Otro'
   ];
 
@@ -106,23 +103,23 @@ const Pilotos = () => {
     'Otro'
   ];
 
-  // Cargar Pilotos
-  const loadPilotos = async () => {
+  // Cargar Clientes
+  const loadClientes = async () => {
     setLoading(true);
     try {
-      console.log('🚀 Cargando pilotos desde:', API_CONFIG.PILOTOS.LIST);
-      const response = await axiosInstance.get(API_CONFIG.PILOTOS.LIST);
-      console.log('✅ Respuesta de pilotos:', response.data);
+      console.log('🚀 Cargando clientes desde:', API_CONFIG.CLIENTES.LIST);
+      const response = await axiosInstance.get(API_CONFIG.CLIENTES.LIST);
+      console.log('✅ Respuesta de clientes:', response.data);
       
       if (response.data.success) {
-        setPilotos(response.data.data);
-        console.log(`📊 ${response.data.data.length} pilotos cargados`);
+        setClientes(response.data.data);
+        console.log(`📊 ${response.data.data.length} clientes cargados`);
       } else {
         console.warn('⚠️ Respuesta sin éxito:', response.data);
-        setPilotos([]);
+        setClientes([]);
       }
     } catch (error) {
-      console.error('❌ Error cargando pilotos:', error);
+      console.error('❌ Error cargando clientes:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -143,24 +140,24 @@ const Pilotos = () => {
         alert(`Error ${error.response.status}: ${error.response.data?.error || 'Error desconocido'}`);
       }
       
-      setPilotos([]);
+      setClientes([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar pilotos al montar el componente
+  // Cargar clientes al montar el componente
   useEffect(() => {
-    loadPilotos();
+    loadClientes();
   }, []);
 
-  // Filtrar pilotos
-  const filteredPilotos = pilotos.filter(piloto => {
-    const matchesSearch = piloto.num_dpi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         piloto.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         piloto.nombres?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtrar Clientes
+  const filteredClientes = clientes.filter(cliente => {
+    const matchesSearch =
+                         cliente.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cliente.razon_social?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === 'all' || piloto.estado === filterStatus;
+    const matchesStatus = filterStatus === 'all' || cliente.estado === filterStatus;
     //const matchesType = filterType === 'all' || piloto.tipo_vehiculo === filterType;
     
     return matchesSearch && matchesStatus;// && matchesType;
@@ -170,17 +167,20 @@ const Pilotos = () => {
   const validateForm = () => {
     const errors = {};
     
-    if (!formData.id_sede) errors.id_sede = 'La sede es requerida';
-    if (!formData.nombres.trim()) errors.nombres = 'Los nombres son requeridos';
-    if (!formData.apellidos.trim()) errors.apellidos = 'Los apellidos son requeridos';
-    if (!formData.fe_nacimiento.trim()) errors.fe_nacimiento = 'La fecha de nacimiento es requerida';
-    if (!formData.direccion.trim()) errors.direccion = 'La dirección es requerida';
-    if (!formData.telefono.trim()) errors.telefono = 'El teléfono es requerido';
-    if (!formData.num_dpi.trim()) errors.num_dpi = 'El número de DPI es requerido';
-    if (!formData.fe_vence_dpi.trim()) errors.fe_vence_dpi = 'La fecha de vencimiento del DPI es requerida';
-    if (!formData.num_licencia.trim()) errors.num_licencia = 'El número de licencia es requerido';
-    if (!formData.fe_vence_licencia.trim()) errors.fe_vence_licencia = 'La fecha de vencimiento de la licencia es requerida';
-    if (!formData.estado) errors.estado = 'El estado es requerido';
+    if (!formData.cod_cliente) errors.cod_cliente = 'El código de cliente es requerido';
+    if (!formData.cod_alterno || !formData.cod_alterno.trim()) errors.cod_alterno = 'El código alterno es requerido';
+    if (!formData.cod_abreviado || !formData.cod_abreviado.trim()) errors.cod_abreviado = 'El código abreviado es requerido';
+    if (!formData.tipo_cliente || !formData.tipo_cliente.trim()) errors.tipo_cliente = 'El tipo de cliente es requerido';
+    if (!formData.nombre || !formData.nombre.trim()) errors.nombre = 'El nombre es requerido';
+    if (!formData.razon_social || !formData.razon_social.trim()) errors.razon_social = 'La razón social es requerida';
+    if (!formData.nit || !formData.nit.trim()) errors.nit = 'El NIT es requerido';
+    if (!formData.direccion || !formData.direccion.trim()) errors.direccion = 'La dirección es requerida';
+    if (!formData.email || !formData.email.trim()) errors.email = 'El email es requerido';
+    if (!formData.telefono || !formData.telefono.trim()) errors.telefono = 'El teléfono es requerido';
+    if (!formData.contacto1 || !formData.contacto1.trim()) errors.contacto1 = 'El contacto 1 es requerido';
+    if (!formData.contacto2 || !formData.contacto2.trim()) errors.contacto2 = 'El contacto 2 es requerido';
+    if (!formData.tel_contacto1 || !formData.tel_contacto1.trim()) errors.tel_contacto1 = 'El teléfono de contacto 1 es requerido';
+    if (!formData.tel_contacto2 || !formData.tel_contacto2.trim()) errors.tel_contacto2 = 'El teléfono de contacto 2 es requerido';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -203,106 +203,116 @@ const Pilotos = () => {
     }
   };
 
-  // Abrir formulario para nuevo vehículo
+  // Abrir formulario para nuevo cliente
   const openNewForm = () => {
     setFormData({
       id_empresa: 1,
-      id_sede: 1,
-      nombres: '',
-      apellidos: '',
-      fe_nacimiento: '',
+      cod_cliente: 1,
+      cod_alterno: '',
+      cod_abreviado: '',
+      tipo_cliente: '',
+      nombre: '',
+      razon_social: '',
+      nit: '',
       direccion: '',
+      email: '',
       telefono: '',
-      num_dpi: '',
-      fe_vence_dpi: '',
-      num_licencia: '',
-      fe_vence_licencia: '',
-      //viajes: '',
+      contacto1: '',
+      contacto2: '',
+      tel_contacto1: '',
+      tel_contacto2: '',
       estado: 'ACT',
       observaciones: ''      
     });
     setFormErrors({});
-    setEditingPiloto(null);
+    setEditingCliente(null);
     setShowForm(true);
   };
 
   // Abrir formulario para editar
-  const openEditForm = (piloto) => {
+  const openEditForm = (cliente) => {
     setFormData({
-      id_empresa: piloto.id_empresa || 1,
-      id_sede: piloto.id_sede || 1,
-      nombres: piloto.nombres || '',
-      apellidos: piloto.apellidos || '',
-      fe_nacimiento: piloto.fe_nacimiento || '',
-      direccion: piloto.direccion || '',
-      telefono: piloto.telefono || '',
-      num_dpi: piloto.num_dpi || '',
-      fe_vence_dpi: piloto.fe_vence_dpi || '',
-      num_licencia: piloto.num_licencia || '',
-      fe_vence_licencia: piloto.fe_vence_licencia || '',
-      observaciones: piloto.observaciones || ''
+      id_empresa: cliente.id_empresa || 1,
+      cod_cliente: cliente.cod_cliente || '',
+      cod_alterno: cliente.cod_alterno || '',
+      cod_abreviado: cliente.cod_abreviado || '',
+      tipo_cliente: cliente.tipo_cliente || '',
+      nombre: cliente.nombre || '',
+      razon_social: cliente.razon_social || '',
+      nit: cliente.nit || '',
+      direccion: cliente.direccion || '',
+      email: cliente.email || '',
+      telefono: cliente.telefono || '',
+      contacto1: cliente.contacto1 || '',
+      contacto2: cliente.contacto2 || '',
+      tel_contacto1: cliente.tel_contacto1 || '',
+      tel_contacto2: cliente.tel_contacto2 || '',
+      observaciones: cliente.observaciones || ''
     });
     setFormErrors({});
-    setEditingPiloto(piloto);
+    setEditingCliente(cliente);
     setShowForm(true);
   };
 
   // Cerrar formulario
   const closeForm = () => {
     setShowForm(false);
-    setEditingPiloto(null);
+    setEditingCliente(null);
     setFormData({
       id_empresa: 1,
-      id_sede: 1,
-      nombres: '',
-      apellidos: '',
-      fe_nacimiento: '',
+      cod_cliente: 1,
+      cod_alterno: '',
+      cod_abreviado: '',
+      tipo_cliente: '',
+      nombre: '',
+      razon_social: '',
+      nit: '',
       direccion: '',
+      email: '',
       telefono: '',
-      num_dpi: '',
-      fe_vence_dpi: '',
-      num_licencia: '',
-      fe_vence_licencia: '',
-      //viajes: '',
+      contacto1: '',
+      contacto2: '',
+      tel_contacto1: '',
+      tel_contacto2: '',
       estado: 'ACT',
       observaciones: ''
     });
     setFormErrors({});
   };
 
-  // Guardar piloto
-  const savePiloto = async () => {
+  // Guardar cliente
+  const saveCliente = async () => {
     console.log('<<Entra>>', formData);
     if (!validateForm()) return;
 
     try {
-      console.log('🚀 Guardando piloto:', formData);
+      console.log('🚀 Guardando cliente:', formData);
       
-        if (editingPiloto) {
+        if (editingCliente) {
         // Actualizar
-        console.log('📝 Actualizando piloto ID:', editingPiloto.id_piloto);
-        const response = await axiosInstance.put(API_CONFIG.PILOTOS.UPDATE(editingPiloto.id_piloto), formData);
-        console.log('✅ Piloto actualizado:', response.data);
+        console.log('📝 Actualizando cliente ID:', editingCliente.id_cliente);
+        const response = await axiosInstance.put(API_CONFIG.CLIENTES.UPDATE(editingCliente.id_cliente), formData);
+        console.log('✅ Cliente actualizado:', response.data);
         
         if (response.data.success) {
-          alert('Piloto actualizado exitosamente');
-          await loadPilotos();
+          alert('Cliente actualizado exitosamente');
+          await loadClientes();
           closeForm();
         }
       } else {
         // Crear nuevo
-        console.log('🆕 Creando nuevo piloto');
-        const response = await axiosInstance.post(API_CONFIG.PILOTOS.CREATE, formData);
-        console.log('✅ Piloto creado:', response.data);
+        console.log('🆕 Creando nuevo cliente');
+        const response = await axiosInstance.post(API_CONFIG.CLIENTES.CREATE, formData);
+        console.log('✅ Cliente creado:', response.data);
         
         if (response.data.success) {
-          alert('Piloto creado exitosamente');
-          await loadPilotos();
+          alert('Cliente creado exitosamente');
+          await loadClientes();
           closeForm();
         }
       }
     } catch (error) {
-      console.error('❌ Error guardando piloto:', error);
+      console.error('❌ Error guardando cliente:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -328,37 +338,37 @@ const Pilotos = () => {
     }
   };
 
-  // Eliminar vehículo
-  const deletePiloto = async (id) => {
+  // Eliminar cliente
+  const deleteCliente = async (id) => {
     try {
-      const response = await axiosInstance.delete(API_CONFIG.PILOTOS.DELETE(id));
+      const response = await axiosInstance.delete(API_CONFIG.CLIENTES.DELETE(id));
       if (response.data.success) {
-        await loadPilotos();
+        await loadClientes();
       }
     } catch (error) {
-      console.error('Error deleting piloto:', error);
+      console.error('Error deleting cliente:', error);
     }
   };
 
   // Mostrar confirmación de eliminación
-  const showDeleteConfirmation = (piloto) => {
-    setPilotoToDelete(piloto);
+  const showDeleteConfirmation = (cliente) => {
+    setClienteToDelete(cliente);
     setShowDeleteConfirm(true);
   };
 
   // Confirmar eliminación
   const confirmDelete = async () => {
-    if (pilotoToDelete) {
-      await deletePiloto(pilotoToDelete.id_piloto);
+    if (clienteToDelete) {
+      await deleteCliente(clienteToDelete.id_cliente);
       setShowDeleteConfirm(false);
-      setPilotoToDelete(null);
+      setClienteToDelete(null);
     }
   };
 
   // Cancelar eliminación
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
-    setPilotoToDelete(null);
+    setClienteToDelete(null);
   };
 
   // Obtener color del estado
@@ -398,10 +408,10 @@ const Pilotos = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              Catálogo de Pilotos
+              Catálogo de Clientes
             </h1>
             <p className="text-slate-600">
-              Administra la información de todos los pilotos de la flota
+              Administra la información de todos los clientes de la flota
             </p>
 
             {/* Aqui muestra el status de la API            */}
@@ -421,12 +431,12 @@ const Pilotos = () => {
             {/* Aqui muestra el status de la conexión */}
             <div className="mt-2">
               <button
-                onClick={loadPilotos}
+                onClick={loadClientes}
                 disabled={loading}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Cargando...' : 'Recargar Pilotos'}
+                {loading ? 'Cargando...' : 'Recargar Clientes'}
               </button>
             </div>
 
@@ -457,7 +467,7 @@ const Pilotos = () => {
             className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
           >
             <Plus className="h-4 w-4" />
-            <span>Nuevo Piloto</span>
+            <span>Nuevo Cliente</span>
           </button>
         </div>
 
@@ -466,7 +476,7 @@ const Pilotos = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-slate-900">
-                {editingPiloto ? 'Editar Piloto' : 'Nuevo Piloto'}
+                {editingCliente ? 'Editar Cliente' : 'Nuevo Cliente'}
               </h2>
               <button
                 onClick={closeForm}
@@ -479,87 +489,146 @@ const Pilotos = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
 
-              {/* Sede */}
+              {/* Empresa */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Sede *
+                  Empresa *
                 </label>
                 <input
                   type="number"
-                  name="id_sede"
-                  value={formData.id_sede}
+                  name="id_empresa"
+                  value={formData.id_empresa}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.id_sede ? 'border-red-500' : ''}`}
+                  className={`input ${formErrors.id_empresa ? 'border-red-500' : ''}`}
                   placeholder="1"
                 />
-                {formErrors.id_sede && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.id_sede}</p>
+                {formErrors.id_empresa && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.id_empresa}</p>
                 )}
               </div>
 
 
-              {/* Nombres */}
+              {/* Código de Cliente */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nombres *
+                  Código de Cliente *
+                </label>
+                <input
+                  type="number"
+                  name="cod_cliente"
+                  value={formData.cod_cliente}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.cod_cliente ? 'border-red-500' : ''}`}
+                  placeholder="CLI001"
+                />
+                {formErrors.cod_cliente && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.cod_cliente}</p>
+                )}
+              </div>
+
+              {/* Código Alterno */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Código Alterno *
                 </label>
                 <input
                   type="text"
-                  name="nombres"
-                  value={formData.nombres}
+                  name="cod_alterno"
+                  value={formData.cod_alterno}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.nombres ? 'border-red-500' : ''}`}
-                  placeholder="Juan"
+                  className={`input ${formErrors.cod_alterno ? 'border-red-500' : ''}`}
+                  placeholder="ALT001"
                 />
-                {formErrors.nombres && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.nombres}</p>
+                {formErrors.cod_alterno && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.cod_alterno}</p>
                 )}
               </div>
 
-              {/* Apellidos */}
+              {/* Código Abreviado */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Apellidos *
+                  Código Abreviado *
                 </label>
                 <input
                   type="text"
-                    name="apellidos"
-                  value={formData.apellidos}
+                  name="cod_abreviado"
+                  value={formData.cod_abreviado}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.apellidos ? 'border-red-500' : ''}`}
-                  placeholder="Perez"
+                  className={`input ${formErrors.cod_abreviado ? 'border-red-500' : ''}`}
+                  placeholder="ABR001"
                 />
-                {formErrors.apellidos && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.apellidos}</p>
-                )}
-              </div>
+              </div>  
 
 
-
-              {/* Fecha de Nacimiento */}
+              {/* Tipo de Cliente */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Fecha de Nacimiento *
+                  Tipo de Cliente *
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="fe_nacimiento"
-                    value={formData.fe_nacimiento}
-                    onChange={handleFormChange}
-                    dateFormat="dd/mm/yyyy"
-                    className={`input ${formErrors.fe_nacimiento ? 'border-red-500' : ''} pr-10`}
-                    max={new Date().toISOString().split('T')[0]} // No permitir fechas futuras
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-                {formErrors.fe_nacimiento && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_nacimiento}</p>
+                <input
+                  type="text"
+                  name="tipo_cliente"
+                  value={formData.tipo_cliente}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.tipo_cliente ? 'border-red-500' : ''}`}
+                  placeholder="Taller"
+                />
+              </div>
+
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Nombre *
+                </label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.nombre ? 'border-red-500' : ''}`}
+                  placeholder="Empresa ABC S.A."
+                />
+              </div>
+
+              {/* Razón Social */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Razón Social *
+                </label>
+                <input
+                  type="text"
+                  name="razon_social"
+                  value={formData.razon_social}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.razon_social ? 'border-red-500' : ''}`}
+                  placeholder="Empresa ABC Sociedad Anónima"
+                />
+                {formErrors.razon_social && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.razon_social}</p>
                 )}
               </div>
 
-              {/* Dirección */}
-              <div>
+               {/* NIT */}
+               <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  NIT *
+                </label>
+                <input
+                  type="text"
+                  name="nit"
+                  value={formData.nit}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.nit ? 'border-red-500' : ''}`}
+                  placeholder="1234567890"
+                />
+                {formErrors.nit && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.nit}</p>
+                )}
+              </div>
+
+
+                {/* Dirección */}
+                <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Dirección *
                 </label>
@@ -569,14 +638,34 @@ const Pilotos = () => {
                   value={formData.direccion}
                   onChange={handleFormChange}
                   className={`input ${formErrors.direccion ? 'border-red-500' : ''}`}
+                  placeholder="Calle 123, Ciudad, País"
                 />
                 {formErrors.direccion && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.direccion}</p>
                 )}
               </div>
 
-              {/* Teléfono */}
-              <div>
+                {/* email */}
+                <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="text"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.email ? 'border-red-500' : ''}`}
+                  placeholder="contacto@empresa.com"
+                />
+                {formErrors.email && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                )}
+              </div>
+
+
+                {/* teléfono */}
+                <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Teléfono *
                 </label>
@@ -586,89 +675,70 @@ const Pilotos = () => {
                   value={formData.telefono}
                   onChange={handleFormChange}
                   className={`input ${formErrors.telefono ? 'border-red-500' : ''}`}
+                  placeholder="+57 300 123 4567"
                 />
-                {formErrors.telefono && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.telefono}</p>
-                )}
               </div>
 
-              {/* DPI */}
+              {/* Contacto 1 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  DPI *
+                  Contacto 1 *
                 </label>
                 <input
                   type="text"
-                  name="num_dpi"
-                  value={formData.num_dpi}
+                  name="contacto1"
+                  value={formData.contacto1}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.num_dpi ? 'border-red-500' : ''}`}
+                  className={`input ${formErrors.contacto1 ? 'border-red-500' : ''}`}
+                  placeholder="Juan Pérez"
                 />
-                {formErrors.num_dpi && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.num_dpi}</p>
-                )}
               </div>
 
-              {/* Fecha de Vencimiento del DPI */}
+              {/* Contacto 2 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Vencimiento DPI *
-                </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="fe_vence_dpi"
-                    value={formData.fe_vence_dpi}
-                    onChange={handleFormChange}
-                    dateFormat="dd/mm/yyyy"
-                    className={`input ${formErrors.fe_vence_dpi ? 'border-red-500' : ''} pr-10`}
-                    min={new Date().toISOString().split('T')[0]} // No permitir fechas pasadas
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-                {formErrors.fe_vence_dpi && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_vence_dpi}</p>
-                )}
-              </div>
-
-              {/* Numero de Licencia */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Licencia *
+                  Contacto 2 *
                 </label>
                 <input
                   type="text"
-                  name="num_licencia"
-                  value={formData.num_licencia}
+                  name="contacto2"
+                  value={formData.contacto2}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.num_licencia ? 'border-red-500' : ''}`}
+                  className={`input ${formErrors.contacto2 ? 'border-red-500' : ''}`}
+                  placeholder="María García"
                 />
-                {formErrors.num_licencia && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.num_dpi}</p>
-                )}
               </div>
 
-              {/* Fecha de Vencimiento de la Licencia */}
+              {/* Teléfono de contacto 1 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Vencimiento Licencia *
+                  Teléfono de Contacto 1 *
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="fe_vence_licencia"
-                    value={formData.fe_vence_licencia}
-                    onChange={handleFormChange}
-                    dateFormat="DD/MM/YYYY"
-                    className={`input ${formErrors.fe_vence_licencia ? 'border-red-500' : ''} pr-10`}
-                    min={new Date().toISOString().split('T')[0]} // No permitir fechas pasadas
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-                {formErrors.fe_vence_licencia && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_vence_licencia}</p>
-                )}
+                <input
+                  type="text"
+                  name="tel_contacto1"
+                  value={formData.tel_contacto1}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.tel_contacto1 ? 'border-red-500' : ''}`}
+                  placeholder="+57 300 123 4567"
+                />
+              </div>              
+              
+              {/* Teléfono de contacto 2 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Teléfono de Contacto 2 *
+                </label>
+                <input
+                  type="text"
+                  name="tel_contacto2"
+                  value={formData.tel_contacto2}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.tel_contacto2 ? 'border-red-500' : ''}`}
+                  placeholder="+57 300 987 6543"
+                />
               </div>
+
 
               {/* Estado */}
               <div>
@@ -690,22 +760,6 @@ const Pilotos = () => {
                 {formErrors.estado && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.estado}</p>
                 )}
-              </div>
-
-              {/* Viajes */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Viajes
-                </label>
-                <input
-                  type="number"
-                  name="viajes"
-                  value={formData.viajes || 0}
-                  onChange={handleFormChange}
-                  className="input"
-                  readOnly
-                  min="0"
-                />
               </div>
 
 
@@ -737,11 +791,11 @@ const Pilotos = () => {
                 Cancelar
               </button>
               <button
-                onClick={savePiloto}
+                onClick={saveCliente}
                 className="btn-primary flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
-                <span>{editingPiloto ? 'Actualizar' : 'Guardar'}</span>
+                <span>{editingCliente ? 'Actualizar' : 'Guardar'}</span>
               </button>
             </div>
           </div>
@@ -755,7 +809,7 @@ const Pilotos = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por DPI, apellidos, nombres..."
+                placeholder="Buscar por código de cliente, nombre, razón social..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input pl-10"
@@ -777,7 +831,7 @@ const Pilotos = () => {
 
 
             <button
-              onClick={loadPilotos}
+              onClick={loadClientes}
               className="btn-secondary flex items-center space-x-2"
             >
               <RefreshCw className="h-4 w-4" />
@@ -785,16 +839,16 @@ const Pilotos = () => {
                   </button>
               </div>
 
-          {/* Tabla de pilotos */}
+          {/* Tabla de clientes */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Piloto
+                    Cliente
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Especificaciones
+                    Razón Social
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Estado
@@ -813,31 +867,31 @@ const Pilotos = () => {
                     <td colSpan="5" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
-                        <span className="text-sm font-medium text-gray-900">Cargando pilotos...</span>
+                        <span className="text-sm font-medium text-gray-900">Cargando clientes...</span>
                         <span className="text-xs text-gray-500">Verificando conexión con el servidor...</span>
                       </div>
                     </td>
                   </tr>
-                ) : filteredPilotos.length === 0 ? (
+                ) : filteredClientes.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <User className="h-12 w-12 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">No se encontraron pilotos</span>
-                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar un nuevo piloto</span>
+                        <span className="text-sm font-medium text-gray-900">No se encontraron clientes</span>
+                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar un nuevo cliente</span>
                         <button
                           onClick={openNewForm}
                           className="mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Agregar Piloto
+                          Agregar Cliente
                         </button>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredPilotos.map((piloto) => (
-                    <tr key={piloto.id_piloto} className="hover:bg-slate-50">
+                  filteredClientes.map((cliente) => (
+                    <tr key={cliente.id_cliente} className="hover:bg-slate-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -847,41 +901,41 @@ const Pilotos = () => {
               </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-slate-900">
-                              {piloto.nombres} {piloto.apellidos}
+                              {cliente.nombre} {cliente.razon_social}
                 </div>
                             <div className="text-sm text-slate-500">
-                              {piloto.num_dpi}
+                              {cliente.nit}
                 </div>
               </div>
                 </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-slate-900">
-                          <div>DPI: {piloto.num_dpi }</div>
-                          <div>Licencia: {piloto.num_licencia}</div>
+                          <div>Rzn Social: {cliente.razon_social }</div>
+                          <div>NIT: {cliente.nit}</div>
                          {/* {vehicle.color && <div>Color: {vehicle.color}</div>} */}
                          {/* {vehicle.kilometraje && <div>KM: {vehicle.kilometraje.toLocaleString()}</div>} */}
                 </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(piloto.estado)}`}>
-                          {getStatusText(piloto.estado)}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(cliente.estado)}`}>
+                          {getStatusText(cliente.estado)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {piloto.fe_registro ? new Date(piloto.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
+                      {cliente.fe_registro ? new Date(cliente.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
-                            onClick={() => openEditForm(piloto)}
+                            onClick={() => openEditForm(cliente)}
                             className="text-blue-600 hover:text-blue-900 p-1"
                             title="Editar"
                           >
                   <Edit className="h-4 w-4" />
                 </button>
                           <button
-                            onClick={() => showDeleteConfirmation(piloto)}
+                            onClick={() => showDeleteConfirmation(cliente)}
                             className="text-red-600 hover:text-red-900 p-1"
                             title="Eliminar"
                           >
@@ -898,7 +952,7 @@ const Pilotos = () => {
 
           {/* Información de registros */}
           <div className="mt-4 text-sm text-slate-500">
-            Mostrando {filteredPilotos.length} de {pilotos.length} pilotos
+            Mostrando {filteredClientes.length} de {clientes.length} clientes
             </div>
           </div>
       </main>
@@ -911,7 +965,7 @@ const Pilotos = () => {
               Confirmar Eliminación
             </h3>
             <p className="text-slate-700 mb-6">
-              ¿Estás seguro de que quieres eliminar el piloto "{pilotoToDelete?.id_piloto}"?
+              ¿Estás seguro de que quieres eliminar el cliente "{clienteToDelete?.id_cliente}"?
               Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end space-x-3">
@@ -935,4 +989,4 @@ const Pilotos = () => {
   );
 };
 
-export default Pilotos; 
+export default Clientes; 

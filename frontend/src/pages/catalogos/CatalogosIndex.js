@@ -36,6 +36,20 @@ const CatalogosIndex = () => {
         inactive: 0
       }
     },
+    
+    {
+      id: 'sedes',
+      title: 'Sedes',
+      description: 'Administración de sedes y talleres',
+      icon: <Building className="h-8 w-8 text-purple-600" />,
+      path: '/catalogos/sedes',
+      color: 'purple',
+      stats: {
+        total: 8,
+        active: 8,
+        inactive: 0
+      }
+    },
 
     {
       id: 'empresas',

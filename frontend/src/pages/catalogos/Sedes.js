@@ -36,34 +36,25 @@ import API_CONFIG from '../../config/api';
 import { getEnvConfig } from '../../config/environment';
 
 
-const Pilotos = () => {
+const Sedes = () => {
   const { user } = useAuth();
-  const [pilotos, setPilotos] = useState([]);
+  const [sedes, setSedes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingPiloto, setEditingPiloto] = useState(null);
+  const [editingSede, setEditingSede] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [pilotoToDelete, setPilotoToDelete] = useState(null);
+  const [sedeToDelete, setSedeToDelete] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
     id_empresa: 1,
-    id_sede: 1,
-    nombres: '',
-    placa_id: '',
-    apellidos: '',
-    fe_nacimiento: '',
-    direccion: '',
-    telefono: '',
-    num_dpi: '',
-    fe_vence_dpi: '',
-    num_licencia: '',
-    fe_vence_licencia: '',
-    //viajes: '',
-    estado: 'ACT',
+    cod_sede: '',
+    cod_abreviado: 'LOC',
+    desc_sede: '',
+    tipo_sede: '',
     observaciones: ''
   });
 
@@ -71,8 +62,7 @@ const Pilotos = () => {
 
   const breadcrumbItems = [
     { id: 'catalogos', label: 'Catálogos', path: '/catalogos' },
-    //{ id: 'vehiculos', label: 'Vehículos', path: '/catalogos/vehiculos' },
-    { id: 'pilotos', label: 'Pilotos', path: '/catalogos/pilotos' }
+    { id: 'sedes', label: 'Sedes', path: '/catalogos/sedes' }
   ];
 
   // Estados disponibles
@@ -86,14 +76,9 @@ const Pilotos = () => {
   ];
 
   // Tipos de vehículo
-  const tiposVehiculo = [
-    'Pickup',
-    'Camión',
-    'Furgón',
-    'Sedán',
-    'SUV',
-    'Motocicleta', 
-    'Otro'
+  const tiposSede = [
+    'LOC',
+    'EXT'
   ];
 
   // Combustibles
@@ -106,23 +91,23 @@ const Pilotos = () => {
     'Otro'
   ];
 
-  // Cargar Pilotos
-  const loadPilotos = async () => {
+  // Cargar Sedes
+  const loadSedes = async () => {
     setLoading(true);
     try {
-      console.log('🚀 Cargando pilotos desde:', API_CONFIG.PILOTOS.LIST);
-      const response = await axiosInstance.get(API_CONFIG.PILOTOS.LIST);
-      console.log('✅ Respuesta de pilotos:', response.data);
+      console.log('🚀 Cargando sedes desde:', API_CONFIG.SEDES.LIST);
+      const response = await axiosInstance.get(API_CONFIG.SEDES.LIST);
+      console.log('✅ Respuesta de sedes:', response.data);
       
       if (response.data.success) {
-        setPilotos(response.data.data);
-        console.log(`📊 ${response.data.data.length} pilotos cargados`);
+        setSedes(response.data.data);
+        console.log(`📊 ${response.data.data.length} sedes cargados`);
       } else {
         console.warn('⚠️ Respuesta sin éxito:', response.data);
-        setPilotos([]);
+        setSedes([]);
       }
     } catch (error) {
-      console.error('❌ Error cargando pilotos:', error);
+      console.error('❌ Error cargando sedes:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -143,25 +128,25 @@ const Pilotos = () => {
         alert(`Error ${error.response.status}: ${error.response.data?.error || 'Error desconocido'}`);
       }
       
-      setPilotos([]);
+      setSedes([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar pilotos al montar el componente
+  // Cargar sedes al montar el componente
   useEffect(() => {
-    loadPilotos();
+    loadSedes();
   }, []);
 
-  // Filtrar pilotos
-  const filteredPilotos = pilotos.filter(piloto => {
-    const matchesSearch = piloto.num_dpi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         piloto.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         piloto.nombres?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtrar sedes
+  const filteredSedes = sedes.filter(sede => {
+    const matchesSearch = sede.desc_sede?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         sede.tipo_sede?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         sede.cod_abreviado?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === 'all' || piloto.estado === filterStatus;
-    //const matchesType = filterType === 'all' || piloto.tipo_vehiculo === filterType;
+    const matchesStatus = filterStatus === 'all' || sede.desc_sede === filterStatus;
+    const matchesType = filterType === 'all' || sede.tipo_sede === filterType;
     
     return matchesSearch && matchesStatus;// && matchesType;
   });
@@ -170,17 +155,11 @@ const Pilotos = () => {
   const validateForm = () => {
     const errors = {};
     
-    if (!formData.id_sede) errors.id_sede = 'La sede es requerida';
-    if (!formData.nombres.trim()) errors.nombres = 'Los nombres son requeridos';
-    if (!formData.apellidos.trim()) errors.apellidos = 'Los apellidos son requeridos';
-    if (!formData.fe_nacimiento.trim()) errors.fe_nacimiento = 'La fecha de nacimiento es requerida';
-    if (!formData.direccion.trim()) errors.direccion = 'La dirección es requerida';
-    if (!formData.telefono.trim()) errors.telefono = 'El teléfono es requerido';
-    if (!formData.num_dpi.trim()) errors.num_dpi = 'El número de DPI es requerido';
-    if (!formData.fe_vence_dpi.trim()) errors.fe_vence_dpi = 'La fecha de vencimiento del DPI es requerida';
-    if (!formData.num_licencia.trim()) errors.num_licencia = 'El número de licencia es requerido';
-    if (!formData.fe_vence_licencia.trim()) errors.fe_vence_licencia = 'La fecha de vencimiento de la licencia es requerida';
-    if (!formData.estado) errors.estado = 'El estado es requerido';
+    if (!formData.cod_sede) errors.cod_sede = 'El código de la sede es requerido';
+    if (!formData.cod_abreviado) errors.cod_abreviado = 'El código abreviado es requerido';
+    if (!formData.desc_sede.trim()) errors.desc_sede = 'El nombre de la sede es requerido';
+    if (!formData.tipo_sede.trim()) errors.tipo_sede = 'El tipo de sede es requerido';
+    if (!formData.observaciones.trim()) errors.observaciones = 'Las observaciones son requeridas';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -207,102 +186,80 @@ const Pilotos = () => {
   const openNewForm = () => {
     setFormData({
       id_empresa: 1,
-      id_sede: 1,
-      nombres: '',
-      apellidos: '',
-      fe_nacimiento: '',
-      direccion: '',
-      telefono: '',
-      num_dpi: '',
-      fe_vence_dpi: '',
-      num_licencia: '',
-      fe_vence_licencia: '',
-      //viajes: '',
-      estado: 'ACT',
-      observaciones: ''      
+      cod_sede: '',
+      cod_abreviado: 'LOC',
+      desc_sede: '',
+      tipo_sede: '',
+      observaciones: ''
     });
     setFormErrors({});
-    setEditingPiloto(null);
+    setEditingSede(null);
     setShowForm(true);
   };
 
   // Abrir formulario para editar
-  const openEditForm = (piloto) => {
+  const openEditForm = (sede) => {
     setFormData({
-      id_empresa: piloto.id_empresa || 1,
-      id_sede: piloto.id_sede || 1,
-      nombres: piloto.nombres || '',
-      apellidos: piloto.apellidos || '',
-      fe_nacimiento: piloto.fe_nacimiento || '',
-      direccion: piloto.direccion || '',
-      telefono: piloto.telefono || '',
-      num_dpi: piloto.num_dpi || '',
-      fe_vence_dpi: piloto.fe_vence_dpi || '',
-      num_licencia: piloto.num_licencia || '',
-      fe_vence_licencia: piloto.fe_vence_licencia || '',
-      observaciones: piloto.observaciones || ''
+      id_empresa: sede.id_empresa || 1,
+      cod_sede: sede.cod_sede || '',
+      cod_abreviado: sede.cod_abreviado || 'LOC',
+      desc_sede: sede.desc_sede || '',
+      tipo_sede: sede.tipo_sede || '',
+      observaciones: sede.observaciones || ''
     });
     setFormErrors({});
-    setEditingPiloto(piloto);
+    setEditingSede(sede);
     setShowForm(true);
   };
 
   // Cerrar formulario
   const closeForm = () => {
     setShowForm(false);
-    setEditingPiloto(null);
+    setEditingSede(null);
     setFormData({
       id_empresa: 1,
-      id_sede: 1,
-      nombres: '',
-      apellidos: '',
-      fe_nacimiento: '',
-      direccion: '',
-      telefono: '',
-      num_dpi: '',
-      fe_vence_dpi: '',
-      num_licencia: '',
-      fe_vence_licencia: '',
-      //viajes: '',
-      estado: 'ACT',
+      cod_sede: '',
+      cod_abreviado: 'LOC',
+      desc_sede: '',
+      tipo_sede: '',
       observaciones: ''
     });
     setFormErrors({});
   };
 
-  // Guardar piloto
-  const savePiloto = async () => {
+  // Guardar sede
+  const saveSede = async () => {
     console.log('<<Entra>>', formData);
     if (!validateForm()) return;
 
     try {
-      console.log('🚀 Guardando piloto:', formData);
+      console.log('🚀 Guardando sede:', formData);
       
-        if (editingPiloto) {
+        if (editingSede) {
         // Actualizar
-        console.log('📝 Actualizando piloto ID:', editingPiloto.id_piloto);
-        const response = await axiosInstance.put(API_CONFIG.PILOTOS.UPDATE(editingPiloto.id_piloto), formData);
-        console.log('✅ Piloto actualizado:', response.data);
+        console.log('📝 Actualizando sede ID:', editingSede.id_sede);
+        const response = await axiosInstance.put(API_CONFIG.SEDES.UPDATE(editingSede.id_sede), formData);
+        console.log('✅ Sede actualizada:', response.data);
         
         if (response.data.success) {
-          alert('Piloto actualizado exitosamente');
-          await loadPilotos();
+          alert('Sede actualizada exitosamente');
+          await loadSedes();
           closeForm();
         }
       } else {
         // Crear nuevo
-        console.log('🆕 Creando nuevo piloto');
-        const response = await axiosInstance.post(API_CONFIG.PILOTOS.CREATE, formData);
-        console.log('✅ Piloto creado:', response.data);
+        console.log('🆕 Creando nuevo sede');
+        const response = await axiosInstance.post(API_CONFIG.SEDES.CREATE, formData);
+        console.log('✅ Sede creada:', response.data);
         
         if (response.data.success) {
-          alert('Piloto creado exitosamente');
-          await loadPilotos();
+          alert('Sede creada exitosamente');
+          await loadSedes();
           closeForm();
         }
       }
     } catch (error) {
-      console.error('❌ Error guardando piloto:', error);
+      console.error('❌ Error guardando sede:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -329,36 +286,36 @@ const Pilotos = () => {
   };
 
   // Eliminar vehículo
-  const deletePiloto = async (id) => {
+  const deleteSede = async (id) => {
     try {
-      const response = await axiosInstance.delete(API_CONFIG.PILOTOS.DELETE(id));
+      const response = await axiosInstance.delete(API_CONFIG.SEDES.DELETE(id));
       if (response.data.success) {
-        await loadPilotos();
+        await loadSedes();
       }
     } catch (error) {
-      console.error('Error deleting piloto:', error);
+      console.error('Error deleting sede:', error);
     }
   };
 
   // Mostrar confirmación de eliminación
-  const showDeleteConfirmation = (piloto) => {
-    setPilotoToDelete(piloto);
+  const showDeleteConfirmation = (sede) => {
+    setSedeToDelete(sede);
     setShowDeleteConfirm(true);
   };
 
   // Confirmar eliminación
   const confirmDelete = async () => {
-    if (pilotoToDelete) {
-      await deletePiloto(pilotoToDelete.id_piloto);
+    if (sedeToDelete) {
+      await deleteSede(sedeToDelete.id_sede);
       setShowDeleteConfirm(false);
-      setPilotoToDelete(null);
+      setSedeToDelete(null);
     }
   };
 
   // Cancelar eliminación
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
-    setPilotoToDelete(null);
+    setSedeToDelete(null);
   };
 
   // Obtener color del estado
@@ -398,10 +355,10 @@ const Pilotos = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              Catálogo de Pilotos
+              Catálogo de Sedes
             </h1>
             <p className="text-slate-600">
-              Administra la información de todos los pilotos de la flota
+              Administra la información de todas las sedes de la flota
             </p>
 
             {/* Aqui muestra el status de la API            */}
@@ -421,12 +378,12 @@ const Pilotos = () => {
             {/* Aqui muestra el status de la conexión */}
             <div className="mt-2">
               <button
-                onClick={loadPilotos}
+                onClick={loadSedes}
                 disabled={loading}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Cargando...' : 'Recargar Pilotos'}
+                {loading ? 'Cargando...' : 'Recargar Sedes'}
               </button>
             </div>
 
@@ -457,7 +414,7 @@ const Pilotos = () => {
             className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
           >
             <Plus className="h-4 w-4" />
-            <span>Nuevo Piloto</span>
+            <span>Nueva Sede</span>
           </button>
         </div>
 
@@ -466,7 +423,7 @@ const Pilotos = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-slate-900">
-                {editingPiloto ? 'Editar Piloto' : 'Nuevo Piloto'}
+                {editingSede ? 'Editar Sede' : 'Nueva Sede'}
               </h2>
               <button
                 onClick={closeForm}
@@ -479,236 +436,77 @@ const Pilotos = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
 
-              {/* Sede */}
+              {/* Código de la Sede */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Sede *
+                  Código de la Sede *
                 </label>
                 <input
                   type="number"
-                  name="id_sede"
-                  value={formData.id_sede}
+                  name="cod_sede"
+                  value={formData.cod_sede}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.id_sede ? 'border-red-500' : ''}`}
-                  placeholder="1"
+                  className={`input ${formErrors.cod_sede ? 'border-red-500' : ''}`}
+                  placeholder="100"
                 />
-                {formErrors.id_sede && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.id_sede}</p>
+                {formErrors.cod_sede && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.cod_sede}</p>
                 )}
               </div>
 
-
-              {/* Nombres */}
+              {/* Código Abreviado */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nombres *
+                  Código Abreviado *
                 </label>
                 <input
                   type="text"
-                  name="nombres"
-                  value={formData.nombres}
+                  name="cod_abreviado"
+                  value={formData.cod_abreviado}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.nombres ? 'border-red-500' : ''}`}
-                  placeholder="Juan"
+                  className={`input ${formErrors.cod_abreviado ? 'border-red-500' : ''}`}
+                  placeholder="LOC"
                 />
-                {formErrors.nombres && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.nombres}</p>
+                {formErrors.cod_abreviado && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.cod_abreviado}</p>
                 )}
               </div>
 
-              {/* Apellidos */}
+              {/* Descripción */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Apellidos *
+                  Descripción de la Sede *
                 </label>
                 <input
                   type="text"
-                    name="apellidos"
-                  value={formData.apellidos}
+                  name="desc_sede"
+                  value={formData.desc_sede}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.apellidos ? 'border-red-500' : ''}`}
-                  placeholder="Perez"
+                  className={`input ${formErrors.desc_sede ? 'border-red-500' : ''}`}
+                  placeholder="Sede de Guatemala"
                 />
-                {formErrors.apellidos && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.apellidos}</p>
+                {formErrors.desc_sede && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.desc_sede}</p>
                 )}
               </div>
 
-
-
-              {/* Fecha de Nacimiento */}
+              {/* Tipo de Sede */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Fecha de Nacimiento *
-                </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="fe_nacimiento"
-                    value={formData.fe_nacimiento}
-                    onChange={handleFormChange}
-                    dateFormat="dd/mm/yyyy"
-                    className={`input ${formErrors.fe_nacimiento ? 'border-red-500' : ''} pr-10`}
-                    max={new Date().toISOString().split('T')[0]} // No permitir fechas futuras
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-                {formErrors.fe_nacimiento && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_nacimiento}</p>
-                )}
-              </div>
-
-              {/* Dirección */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Dirección *
+                  Tipo de Sede *
                 </label>
                 <input
                   type="text"
-                  name="direccion"
-                  value={formData.direccion}
+                  name="tipo_sede"
+                  value={formData.tipo_sede}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.direccion ? 'border-red-500' : ''}`}
+                  className={`input ${formErrors.tipo_sede ? 'border-red-500' : ''}`}
+                  placeholder="LOC"
                 />
-                {formErrors.direccion && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.direccion}</p>
+                {formErrors.tipo_sede && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.tipo_sede}</p>
                 )}
               </div>
-
-              {/* Teléfono */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Teléfono *
-                </label>
-                <input
-                  type="text"
-                  name="telefono"
-                  value={formData.telefono}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.telefono ? 'border-red-500' : ''}`}
-                />
-                {formErrors.telefono && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.telefono}</p>
-                )}
-              </div>
-
-              {/* DPI */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  DPI *
-                </label>
-                <input
-                  type="text"
-                  name="num_dpi"
-                  value={formData.num_dpi}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.num_dpi ? 'border-red-500' : ''}`}
-                />
-                {formErrors.num_dpi && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.num_dpi}</p>
-                )}
-              </div>
-
-              {/* Fecha de Vencimiento del DPI */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Vencimiento DPI *
-                </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="fe_vence_dpi"
-                    value={formData.fe_vence_dpi}
-                    onChange={handleFormChange}
-                    dateFormat="dd/mm/yyyy"
-                    className={`input ${formErrors.fe_vence_dpi ? 'border-red-500' : ''} pr-10`}
-                    min={new Date().toISOString().split('T')[0]} // No permitir fechas pasadas
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-                {formErrors.fe_vence_dpi && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_vence_dpi}</p>
-                )}
-              </div>
-
-              {/* Numero de Licencia */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Licencia *
-                </label>
-                <input
-                  type="text"
-                  name="num_licencia"
-                  value={formData.num_licencia}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.num_licencia ? 'border-red-500' : ''}`}
-                />
-                {formErrors.num_licencia && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.num_dpi}</p>
-                )}
-              </div>
-
-              {/* Fecha de Vencimiento de la Licencia */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Vencimiento Licencia *
-                </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="fe_vence_licencia"
-                    value={formData.fe_vence_licencia}
-                    onChange={handleFormChange}
-                    dateFormat="DD/MM/YYYY"
-                    className={`input ${formErrors.fe_vence_licencia ? 'border-red-500' : ''} pr-10`}
-                    min={new Date().toISOString().split('T')[0]} // No permitir fechas pasadas
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-                {formErrors.fe_vence_licencia && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_vence_licencia}</p>
-                )}
-              </div>
-
-              {/* Estado */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Estado *
-                </label>
-                <select
-                  name="estado"
-                  value={formData.estado}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.estado ? 'border-red-500' : ''}`}
-                >
-                  {estados.map(estado => (
-                    <option key={estado.value} value={estado.value}>
-                      {estado.label}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.estado && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.estado}</p>
-                )}
-              </div>
-
-              {/* Viajes */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Viajes
-                </label>
-                <input
-                  type="number"
-                  name="viajes"
-                  value={formData.viajes || 0}
-                  onChange={handleFormChange}
-                  className="input"
-                  readOnly
-                  min="0"
-                />
-              </div>
-
-
 
             </div>
 
@@ -737,11 +535,11 @@ const Pilotos = () => {
                 Cancelar
               </button>
               <button
-                onClick={savePiloto}
+                onClick={saveSede}
                 className="btn-primary flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
-                <span>{editingPiloto ? 'Actualizar' : 'Guardar'}</span>
+                <span>{editingSede ? 'Actualizar' : 'Guardar'}</span>
               </button>
             </div>
           </div>
@@ -755,29 +553,27 @@ const Pilotos = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por DPI, apellidos, nombres..."
+                placeholder="Buscar por Sede, Tipo de Sede..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input pl-10"
               />
             </div>
             
+
             <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
               className="input max-w-xs"
             >
-              <option value="all">Todos los estados</option>
-              {estados.map(estado => (
-                <option key={estado.value} value={estado.value}>
-                  {estado.label}
-                </option>
+              <option value="all">Todos los tipos</option>
+              {tiposSede.map(tipo => (
+                <option key={tipo} value={tipo}>{tipo}</option>
               ))}
             </select>
 
-
             <button
-              onClick={loadPilotos}
+              onClick={loadSedes}
               className="btn-secondary flex items-center space-x-2"
             >
               <RefreshCw className="h-4 w-4" />
@@ -785,16 +581,16 @@ const Pilotos = () => {
                   </button>
               </div>
 
-          {/* Tabla de pilotos */}
+          {/* Tabla de Sedes */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Piloto
+                    Sede
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Especificaciones
+                    Tipo de Sede
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Estado
@@ -813,31 +609,31 @@ const Pilotos = () => {
                     <td colSpan="5" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
-                        <span className="text-sm font-medium text-gray-900">Cargando pilotos...</span>
+                        <span className="text-sm font-medium text-gray-900">Cargando sedes...</span>
                         <span className="text-xs text-gray-500">Verificando conexión con el servidor...</span>
                       </div>
                     </td>
                   </tr>
-                ) : filteredPilotos.length === 0 ? (
+                ) : filteredSedes.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <User className="h-12 w-12 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">No se encontraron pilotos</span>
-                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar un nuevo piloto</span>
+                        <span className="text-sm font-medium text-gray-900">No se encontraron sedes</span>
+                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar una nueva sede</span>
                         <button
                           onClick={openNewForm}
                           className="mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Agregar Piloto
+                          Agregar Sede
                         </button>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredPilotos.map((piloto) => (
-                    <tr key={piloto.id_piloto} className="hover:bg-slate-50">
+                  filteredSedes.map((sede) => (
+                    <tr key={sede.id_sede} className="hover:bg-slate-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -847,41 +643,40 @@ const Pilotos = () => {
               </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-slate-900">
-                              {piloto.nombres} {piloto.apellidos}
+                              {sede.desc_sede}
                 </div>
                             <div className="text-sm text-slate-500">
-                              {piloto.num_dpi}
+                              {sede.tipo_sede}
                 </div>
               </div>
                 </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-slate-900">
-                          <div>DPI: {piloto.num_dpi }</div>
-                          <div>Licencia: {piloto.num_licencia}</div>
-                         {/* {vehicle.color && <div>Color: {vehicle.color}</div>} */}
+                          <div>Tp: {sede.tipo_sede }</div>
+                         { sede.cod_abreviado && <div>Cód Abrev: {sede.cod_abreviado}</div>} 
                          {/* {vehicle.kilometraje && <div>KM: {vehicle.kilometraje.toLocaleString()}</div>} */}
                 </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(piloto.estado)}`}>
-                          {getStatusText(piloto.estado)}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(sede.estado)}`}>
+                          {getStatusText(sede.estado)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {piloto.fe_registro ? new Date(piloto.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
+                      {sede.fe_registro ? new Date(sede.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
-                            onClick={() => openEditForm(piloto)}
+                            onClick={() => openEditForm(sede)}
                             className="text-blue-600 hover:text-blue-900 p-1"
                             title="Editar"
                           >
                   <Edit className="h-4 w-4" />
                 </button>
                           <button
-                            onClick={() => showDeleteConfirmation(piloto)}
+                            onClick={() => showDeleteConfirmation(sede)}
                             className="text-red-600 hover:text-red-900 p-1"
                             title="Eliminar"
                           >
@@ -898,7 +693,7 @@ const Pilotos = () => {
 
           {/* Información de registros */}
           <div className="mt-4 text-sm text-slate-500">
-            Mostrando {filteredPilotos.length} de {pilotos.length} pilotos
+            Mostrando {filteredSedes.length} de {sedes.length} sedes
             </div>
           </div>
       </main>
@@ -911,7 +706,7 @@ const Pilotos = () => {
               Confirmar Eliminación
             </h3>
             <p className="text-slate-700 mb-6">
-              ¿Estás seguro de que quieres eliminar el piloto "{pilotoToDelete?.id_piloto}"?
+              ¿Estás seguro de que quieres eliminar la sede "{sedeToDelete?.id_sede}"?
               Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end space-x-3">
@@ -935,4 +730,4 @@ const Pilotos = () => {
   );
 };
 
-export default Pilotos; 
+export default Sedes; 

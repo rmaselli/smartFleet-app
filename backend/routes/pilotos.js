@@ -5,7 +5,7 @@ const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET - Obtener todos los vehículos
+// GET - Obtener todos los pilotos
 router.get('/', auth, async (req, res) => {
   try {
     const [pilotos] = await pool.execute(
@@ -26,7 +26,24 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// GET - Obtener un vehículo por ID
+// GET - Listado sin autorizacion
+router.get('/cat', async (req, res) => {
+  try {
+    const [catPilotos] = await pool.execute(
+      'SELECT * FROM FLVEHI.FLVEH_M004 ORDER BY id_piloto DESC'
+    );
+    res.send(catPilotos);
+  } catch (error) {
+    console.error('Error getting pilotos:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener los pilotos' 
+    });
+  }
+});
+
+
+// GET - Obtener un piloto por ID
 router.get('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;

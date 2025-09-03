@@ -28,7 +28,28 @@ PILOTOS: {
   CREATE: '/api/pilotos',
   UPDATE: (id) => `/api/pilotos/${id}`,
   DELETE: (id) => `/api/pilotos/${id}`,
-  GET: (id) => `/api/pilotos/${id}`
+  GET: (id) => `/api/pilotos/${id}`,
+  CATALOGO: '/api/pilotos/cat'
+},
+
+// Endpoints de sedes / talleres
+SEDES: {
+  LIST: '/api/sedes',
+  CREATE: '/api/sedes',
+  UPDATE: (id) => `/api/sedes/${id}`,
+  DELETE: (id) => `/api/sedes/${id}`,
+  GET: (id) => `/api/sedes/${id}`,
+  CATALOGO: '/api/sedes/cat'
+},
+
+// Endpoints de clientes
+CLIENTES: {
+  LIST: '/api/clientes',
+  CREATE: '/api/clientes',
+  UPDATE: (id) => `/api/clientes/${id}`,
+  DELETE: (id) => `/api/clientes/${id}`,
+  GET: (id) => `/api/clientes/${id}`,
+  CATALOGO: '/api/clientes/cat'
 },
 
 

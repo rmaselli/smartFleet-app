@@ -47,6 +47,7 @@ const Vehiculos = () => {
   const [filterType, setFilterType] = useState('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState(null);
+  const [pilotos, setPilotos] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -64,6 +65,7 @@ const Vehiculos = () => {
     kilometraje: '',
     tipo_combustible: '',
     capacidad_carga: '',
+    id_piloto: '',
     //ultima_lectura: '',
     observaciones: ''
   });
@@ -153,9 +155,22 @@ const Vehiculos = () => {
     }
   };
 
+  // Cargar pilotos
+  const loadPilotos = async () => {
+    try {
+      const response = await axiosInstance.get(API_CONFIG.PILOTOS.LIST);
+      if (response.data.success) {
+        setPilotos(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error cargando pilotos:', error);
+    }
+  };
+
   // Cargar vehículos al montar el componente
   useEffect(() => {
     loadVehicles();
+    loadPilotos();
   }, []);
 
   // Filtrar vehículos
@@ -220,8 +235,10 @@ const Vehiculos = () => {
       kilometraje: '',
       tipo_combustible: '',
       capacidad_carga: '',
+      id_piloto: '',
       ultima_lectura: '',
-      observaciones: ''
+      observaciones: '',
+      fe_registro: ''
     });
     setFormErrors({});
     setEditingVehicle(null);
@@ -245,8 +262,11 @@ const Vehiculos = () => {
       kilometraje: vehicle.kilometraje || '',
       tipo_combustible: vehicle.tipo_combustible || '',
       capacidad_carga: vehicle.capacidad_carga || '',
+      id_piloto: vehicle.id_piloto || '',
       ultima_lectura: vehicle.ultima_lectura || '',
-      observaciones: vehicle.observaciones || ''
+      observaciones: vehicle.observaciones || '',
+      fe_registro: vehicle.fe_registro || '',
+      fe_modificacion: vehicle.fe_modificacion || ''  
     });
     setFormErrors({});
     setEditingVehicle(vehicle);
@@ -272,6 +292,7 @@ const Vehiculos = () => {
       kilometraje: '',
       tipo_combustible: '',
       capacidad_carga: '',
+      id_piloto: '',
       ultima_lectura: '',
       observaciones: ''
     });
@@ -704,15 +725,19 @@ const Vehiculos = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Piloto
                 </label>
-                <input
-                  type="number"
+                <select
                   name="id_piloto"
-                  value={formData.id_piloto}
+                  value={formData.id_piloto || ''}
                   onChange={handleFormChange}
                   className="input"
-                  placeholder="1"
-                  min="1"
-                />
+                >
+                  <option value="">Seleccionar piloto</option>
+                  {pilotos.map(piloto => (
+                    <option key={piloto.id_piloto} value={piloto.id_piloto}>
+                      {piloto.nombres} {piloto.apellidos} - {piloto.num_dpi}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               
@@ -765,8 +790,9 @@ const Vehiculos = () => {
               </div>
 
               {/* Ultima Lectura */}
+              {/* {formData.ultima_lectura} */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm mb-2 text-red-500 font-bold">
                   Ultima Lectura
                   </label>
                 <input
@@ -782,7 +808,7 @@ const Vehiculos = () => {
 
               {/* Ultimo KM Taller */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm mb-2 text-red-500 font-bold">
                   Ultimo KM Taller
                   </label>
                 <input
@@ -799,7 +825,7 @@ const Vehiculos = () => {
 
               {/* Ultimo Servicio Taller */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm mb-2 text-red-500 font-bold">
                   Ultimo Servicio Taller
                   </label>
                 <input
@@ -830,8 +856,15 @@ const Vehiculos = () => {
                 className="input w-full"
                 placeholder="Observaciones adicionales..."
               />
+
+               
             </div>
 
+            {/* Datos Footer, que serán datos acumulativos, calculados  */}
+            Fe/Registro: {formData.fe_registro} & Fe/Modificacion: {formData.fe_modificacion}
+            
+            
+            
             {/* Botones de acción */}
             <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-slate-200">
               <button

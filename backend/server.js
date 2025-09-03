@@ -8,6 +8,8 @@ const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
 const vehiculosRoutes = require('./routes/vehiculos');
 const pilotosRoutes = require('./routes/pilotos');
+const sedesRoutes = require('./routes/sedes');
+const clientesRoutes = require('./routes/clientes');
 const { initDatabase } = require('./config/database');
 const serverConfig = require('./config/server');
 
@@ -48,6 +50,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/vehiculos', vehiculosRoutes);
 app.use('/api/pilotos', pilotosRoutes);
+app.use('/api/sedes', sedesRoutes);
+app.use('/api/clientes', clientesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

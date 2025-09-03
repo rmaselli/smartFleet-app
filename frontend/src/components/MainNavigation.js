@@ -103,10 +103,10 @@ const MainNavigation = () => {
           path: '/catalogos/clientes'
         },
         {
-          id: 'sedes-talleres',
+          id: 'sedes',
           label: 'Sedes / Talleres',
           icon: <Wrench className="h-4 w-4" />,
-          path: '/catalogos/sedes-talleres'
+          path: '/catalogos/sedes'
         },
         {
           id: 'check-master',
