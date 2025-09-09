@@ -86,8 +86,12 @@ router.post('/', auth, [
   body('fe_vence_dpi').notEmpty().trim().escape(),
   body('num_licencia').notEmpty().trim().escape(),
   body('fe_vence_licencia').notEmpty().trim().escape(),
+  body('fe_ingreso').notEmpty().trim().escape(),
   body('estado').notEmpty().trim().escape(),
-  body('observaciones').optional().trim().escape()
+  body('horas_conducidas').notEmpty().trim().escape(),
+  body('ingreso_bruto').notEmpty().trim().escape(),
+  body('observaciones').optional().trim().escape(),
+  body('foto').optional().trim().escape()
 ], async (req, res) => {
   try {
     // Validar campos
@@ -111,8 +115,12 @@ router.post('/', auth, [
       fe_vence_dpi,
       num_licencia,
       fe_vence_licencia,
+      fe_ingreso,
       estado,
-      observaciones
+      horas_conducidas,
+      ingreso_bruto,
+      observaciones,
+      foto
     } = req.body;
 
     // Verificar si el piloto ya existe por DPI
@@ -133,8 +141,8 @@ router.post('/', auth, [
     // Insertar nuevo piloto
     const [result] = await pool.execute(
       `INSERT INTO FLVEHI.FLVEH_M004 (
-        id_empresa, id_sede, nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, estado, observaciones, fe_registro, fe_modificacion, viajes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)`,
+        id_empresa, id_sede, nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, fe_ingreso, estado, horas_conducidas, ingreso_bruto, observaciones, foto, fe_registro, fe_modificacion, viajes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)`,
       [
         id_empresa || 1, 
         id_sede || 1,  
@@ -147,8 +155,12 @@ router.post('/', auth, [
         fe_vence_dpi, 
         num_licencia, 
         fe_vence_licencia,  
+        fe_ingreso,
         estado, 
-        observaciones
+        horas_conducidas,
+        ingreso_bruto,
+        observaciones,
+        foto
       ]
     );
 
@@ -186,9 +198,13 @@ router.put('/:id', auth, [
   body('fe_vence_dpi').notEmpty().trim().escape(),
   body('num_licencia').notEmpty().trim().escape(),
   body('fe_vence_licencia').notEmpty().trim().escape(),
+  body('fe_ingreso').notEmpty().trim().escape(),
   //body('viajes').notEmpty().trim().escape(),
   body('estado').notEmpty().trim().escape(),
+  body('horas_conducidas').notEmpty().trim().escape(),
+  body('ingreso_bruto').notEmpty().trim().escape(),
   body('observaciones').notEmpty().trim().escape(),
+  body('foto').optional().trim().escape(),
   body('fe_modificacion').notEmpty().trim().escape()
 ], async (req, res) => {
   try {
@@ -216,9 +232,13 @@ router.put('/:id', auth, [
       fe_vence_dpi,
       num_licencia,
       fe_vence_licencia,
+      fe_ingreso,
       //viajes,
       estado,
-      observaciones
+      horas_conducidas,
+      ingreso_bruto,
+      observaciones,
+      foto
     } = req.body;
 
     // Verificar si el piloto ya existe con otro DPI
@@ -250,11 +270,11 @@ router.put('/:id', auth, [
     // Actualizar piloto
     await pool.execute(
       `UPDATE FLVEHI.FLVEH_M004 SET 
-        nombres = ?, apellidos = ?, fe_nacimiento = ?, direccion = ?, telefono = ?, num_dpi = ?, fe_vence_dpi = ?, num_licencia = ?, fe_vence_licencia = ?,  estado = ?, observaciones = ?, 
+        nombres = ?, apellidos = ?, fe_nacimiento = ?, direccion = ?, telefono = ?, num_dpi = ?, fe_vence_dpi = ?, num_licencia = ?, fe_vence_licencia = ?, fe_ingreso = ?, estado = ?, horas_conducidas = ?, ingreso_bruto = ?, observaciones = ?, 
         fe_modificacion = CURRENT_TIMESTAMP
       WHERE id_piloto = ? AND id_empresa = ? AND id_sede = ?`,
       [
-        nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, estado, observaciones, id, id_empresa, id_sede
+        nombres, apellidos, fe_nacimiento, direccion, telefono, num_dpi, fe_vence_dpi, num_licencia, fe_vence_licencia, fe_ingreso, estado, horas_conducidas, ingreso_bruto, observaciones, foto
       ]
     );
 

@@ -10,6 +10,16 @@ const vehiculosRoutes = require('./routes/vehiculos');
 const pilotosRoutes = require('./routes/pilotos');
 const sedesRoutes = require('./routes/sedes');
 const clientesRoutes = require('./routes/clientes');
+const checkMasterRoutes = require('./routes/check-master');
+const tiposVehiculosRoutes = require('./routes/tipos-vehiculos');
+// Rutas de Operaciones
+const salidasRoutes = require('./routes/operaciones/salidas');
+const serviciosRoutes = require('./routes/operaciones/servicios');
+const repuestosRoutes = require('./routes/operaciones/repuestos');
+const ingresoRepuestosRoutes = require('./routes/operaciones/ingreso-repuestos');
+// Rutas de Procesos
+const cambioPilotosRoutes = require('./routes/procesos/cambio-pilotos');
+
 const { initDatabase } = require('./config/database');
 const serverConfig = require('./config/server');
 
@@ -52,6 +62,15 @@ app.use('/api/vehiculos', vehiculosRoutes);
 app.use('/api/pilotos', pilotosRoutes);
 app.use('/api/sedes', sedesRoutes);
 app.use('/api/clientes', clientesRoutes);
+app.use('/api/check-master', checkMasterRoutes);
+app.use('/api/tipos-vehiculos', tiposVehiculosRoutes);
+// Rutas de Operaciones
+app.use('/api/salidas', salidasRoutes);
+app.use('/api/servicios', serviciosRoutes);
+app.use('/api/repuestos', repuestosRoutes);
+app.use('/api/ingreso-repuestos', ingresoRepuestosRoutes);
+// Rutas de Procesos
+app.use('/api/cambio-pilotos', cambioPilotosRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

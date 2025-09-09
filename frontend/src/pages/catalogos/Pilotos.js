@@ -29,7 +29,8 @@ import {
   Save,
   X,
   RefreshCw,
-  Bike
+  Bike,
+  Image
 } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 import API_CONFIG from '../../config/api';
@@ -62,9 +63,13 @@ const Pilotos = () => {
     fe_vence_dpi: '',
     num_licencia: '',
     fe_vence_licencia: '',
+    fe_ingreso: '',
     //viajes: '',
     estado: 'ACT',
-    observaciones: ''
+    horas_conducidas: '',
+    ingreso_bruto: '',
+    observaciones: '',
+    foto: ''
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -217,9 +222,13 @@ const Pilotos = () => {
       fe_vence_dpi: '',
       num_licencia: '',
       fe_vence_licencia: '',
+      fe_ingreso: '',
       //viajes: '',
       estado: 'ACT',
-      observaciones: ''      
+      horas_conducidas: '',
+      ingreso_bruto: '',
+      observaciones: '',
+      foto: ''
     });
     setFormErrors({});
     setEditingPiloto(null);
@@ -240,11 +249,23 @@ const Pilotos = () => {
       fe_vence_dpi: piloto.fe_vence_dpi || '',
       num_licencia: piloto.num_licencia || '',
       fe_vence_licencia: piloto.fe_vence_licencia || '',
-      observaciones: piloto.observaciones || ''
+      fe_ingreso: piloto.fe_ingreso || '',
+      horas_conducidas: piloto.horas_conducidas || '',
+      ingreso_bruto: piloto.ingreso_bruto || '',
+      observaciones: piloto.observaciones || '',
+      foto: piloto.foto 
     });
     setFormErrors({});
     setEditingPiloto(piloto);
     setShowForm(true);
+  };
+
+  // Abrir formulario para editar
+  const openImageForm = (piloto) => {
+    setFormData({
+      id_empresa: piloto.id_empresa || 1,
+      id_sede: piloto.id_sede || 1
+    });
   };
 
   // Cerrar formulario
@@ -263,9 +284,13 @@ const Pilotos = () => {
       fe_vence_dpi: '',
       num_licencia: '',
       fe_vence_licencia: '',
+      fe_ingreso: '',
       //viajes: '',
       estado: 'ACT',
-      observaciones: ''
+      horas_conducidas: '',
+      ingreso_bruto: '',
+      observaciones: '',
+      foto: ''
     });
     setFormErrors({});
   };
@@ -478,6 +503,16 @@ const Pilotos = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Foto
+              </label>
+              <input type="file" name="foto" onChange={handleFormChange} className="input" />
+              {formErrors.foto && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.foto}</p>
+              )}
+            </div>
+
 
               {/* Sede */}
               <div>
@@ -670,6 +705,29 @@ const Pilotos = () => {
                 )}
               </div>
 
+              {/* Fecha de Ingreso del Piloto */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Fecha de Ingreso *
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="fe_ingreso"
+                    value={formData.fe_ingreso}
+                    onChange={handleFormChange}
+                    dateFormat="DD/MM/YYYY"
+                    className={`input ${formErrors.fe_ingreso ? 'border-red-500' : ''} pr-10`}                    
+                  />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
+                {formErrors.fe_ingreso && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.fe_ingreso}</p>
+                )}
+              </div>
+
+              
+
               {/* Estado */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -691,6 +749,39 @@ const Pilotos = () => {
                   <p className="text-red-500 text-sm mt-1">{formErrors.estado}</p>
                 )}
               </div>
+
+              {/* Horas Conducidas */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Horas Conducidas
+                </label>
+                <input
+                  type="number"
+                  name="horas_conducidas"
+                  value={formData.horas_conducidas || 0}
+                  onChange={handleFormChange}
+                  className="input"
+                  readOnly
+                  min="0"
+                />
+              </div>
+
+              {/* Ingreso Bruto */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Ingreso Bruto
+                </label>
+                <input
+                  type="number"
+                  name="ingreso_bruto"
+                  value={formData.ingreso_bruto || 0}
+                  onChange={handleFormChange}
+                  className="input"
+                  readOnly
+                  min="0"
+                />
+              </div>              
+
 
               {/* Viajes */}
               <div>
@@ -878,15 +969,23 @@ const Pilotos = () => {
                             className="text-blue-600 hover:text-blue-900 p-1"
                             title="Editar"
                           >
-                  <Edit className="h-4 w-4" />
-                </button>
+                           <Edit className="h-4 w-4" />
+                          </button>
                           <button
                             onClick={() => showDeleteConfirmation(piloto)}
                             className="text-red-600 hover:text-red-900 p-1"
                             title="Eliminar"
                           >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                          <Trash2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openImageForm(piloto)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            title="Foto"
+                          >
+                          <Image className="h-4 w-4" />
+                          </button>
+                          
               </div>
                       </td>
                     </tr>

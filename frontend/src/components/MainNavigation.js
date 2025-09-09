@@ -110,9 +110,15 @@ const MainNavigation = () => {
         },
         {
           id: 'check-master',
-          label: 'Check Master',
+          label: 'Elementos Hojas E/S',
           icon: <CheckSquare className="h-4 w-4" />,
           path: '/catalogos/check-master'
+        },
+        {
+          id: 'vales-combustible',
+          label: 'Vales de Combustible',
+          icon: <Fuel className="h-4 w-4" />,
+          path: '/procesos/vales-combustible'
         },
         {
           id: 'repuestos-servicios',
@@ -129,53 +135,49 @@ const MainNavigation = () => {
       ]
     },
     {
-      id: 'procesos',
-      label: 'Procesos',
+      id: 'operaciones',
+      label: 'Operaciones',
       icon: <Settings className="h-5 w-5" />,
       submenu: [
-        {
-          id: 'vales-combustible',
-          label: 'Vales de Combustible',
-          icon: <Fuel className="h-4 w-4" />,
-          path: '/procesos/vales-combustible'
-        },
+
         {
           id: 'salidas',
           label: 'Salidas',
           icon: <LogOut className="h-4 w-4" />,
-          path: '/procesos/salidas'
+          path: '/operaciones/salidas'
         },
         {
           id: 'servicios',
           label: 'Servicios',
           icon: <Wrench className="h-4 w-4" />,
-          path: '/procesos/servicios'
+          path: '/operaciones/servicios'
         },
         {
           id: 'repuestos',
           label: 'Repuestos',
           icon: <Package className="h-4 w-4" />,
-          path: '/procesos/repuestos'
-        }
+          path: '/operaciones/repuestos'
+        },
+        {
+          id: 'ingreso-repuestos',
+          label: 'Ingreso de Repuestos',
+          icon: <Plus className="h-4 w-4" />,
+          path: '/operaciones/ingreso-repuestos'
+        }        
       ]
     },
     {
       id: 'repuestos',
-      label: 'Repuestos',
+      label: 'Procesos',
       icon: <Package className="h-5 w-5" />,
       submenu: [
         {
           id: 'cambio-pilotos',
           label: 'Cambio Pilotos',
           icon: <UserCheck className="h-4 w-4" />,
-          path: '/repuestos/cambio-pilotos'
-        },
-        {
-          id: 'ingreso-repuestos',
-          label: 'Ingreso de Repuestos',
-          icon: <Plus className="h-4 w-4" />,
-          path: '/repuestos/ingreso-repuestos'
+          path: '/procesos/cambio-pilotos'
         }
+
       ]
     },
     {

@@ -49,8 +49,8 @@ const MainDashboard = () => {
       path: '/catalogos'
     },
     {
-      id: 'procesos',
-      title: 'Procesos',
+      id: 'Operaciones',
+      title: 'Operaciones',
       description: 'Flujos de trabajo automatizados',
       icon: <Settings className="h-8 w-8 text-purple-600" />,
       color: 'purple',
@@ -59,11 +59,11 @@ const MainDashboard = () => {
         active: 75,
         pending: 14
       },
-      path: '/procesos'
+      path: '/operaciones'
     },
     {
-      id: 'repuestos',
-      title: 'Repuestos',
+      id: 'Procesos',
+      title: 'Procesos',
       description: 'Control de inventario y cambios',
       icon: <Package className="h-8 w-8 text-orange-600" />,
       color: 'orange',
@@ -72,7 +72,7 @@ const MainDashboard = () => {
         active: 298,
         pending: 22
       },
-      path: '/repuestos'
+      path: '/procesos'
     },
     {
       id: 'consultas',
@@ -179,12 +179,14 @@ const MainDashboard = () => {
                 <div className={`p-3 rounded-lg bg-${section.color}-50 group-hover:bg-${section.color}-100 transition-colors duration-200`}>
                   {section.icon}
                 </div>
+                {/*}
                 <div className="text-right">
                   <div className="text-2xl font-bold text-slate-900">
-                    {section.stats.total}
+                     {section.stats.total} 
                   </div>
                   <div className="text-sm text-slate-500">Total</div>
                 </div>
+                */}
               </div>
               
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
@@ -194,13 +196,16 @@ const MainDashboard = () => {
                 {section.description}
               </p>
               
+              {/*
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
+                 
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span className="text-slate-600">
                     {section.stats.active} Activos
                   </span>
                 </div>
+                
                 {section.stats.pending > 0 && (
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
@@ -209,7 +214,9 @@ const MainDashboard = () => {
                     </span>
                   </div>
                 )}
+                  
               </div>
+              */}
             </div>
           ))}
         </div>

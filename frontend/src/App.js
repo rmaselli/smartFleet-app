@@ -12,6 +12,17 @@ import Pilotos from './pages/catalogos/Pilotos';
 import Sedes from './pages/catalogos/Sedes';
 import Clientes from './pages/catalogos/Clientes';
 import UsuariosRoles from './pages/seguridad/UsuariosRoles';
+import CheckMaster from './pages/catalogos/Check-master';
+import TiposVehiculos from './pages/catalogos/Tipos-vehiculos';
+// Operaciones
+import Salidas from './pages/operaciones/Salidas';
+import Servicios from './pages/operaciones/Servicios';
+import Repuestos from './pages/operaciones/Repuestos';
+import IngresoRepuestos from './pages/operaciones/Ingreso-repuestos';
+// Procesos
+import CambioPilotos from './pages/procesos/Cambio-pilotos';
+
+
 import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
@@ -68,12 +79,51 @@ function App() {
           path="/catalogos/clientes" 
           element={isAuthenticated ? <Clientes /> : <Navigate to="/login" />} 
         />
+        <Route 
+          path="/catalogos/check-master" 
+          element={isAuthenticated ? <CheckMaster /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/catalogos/tipos-vehiculos" 
+          element={isAuthenticated ? <TiposVehiculos /> : <Navigate to="/login" />} 
+        />
 
         {/* Rutas de Seguridad */}
         <Route 
           path="/seguridad/usuarios-roles" 
           element={isAuthenticated ? <UsuariosRoles /> : <Navigate to="/login" />} 
         />
+
+
+        {/* Rutas de Operaciones */}
+        <Route 
+          path="/operaciones/salidas" 
+          element={isAuthenticated ? <Salidas /> : <Navigate to="/login" />} 
+        />
+
+       
+        <Route 
+          path="/operaciones/servicios" 
+          element={isAuthenticated ? <Servicios /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/operaciones/repuestos" 
+          element={isAuthenticated ? <Repuestos /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/operaciones/ingreso-repuestos" 
+          element={isAuthenticated ? <IngresoRepuestos /> : <Navigate to="/login" />} 
+        />
+       
+
+
+        {/* Rutas de Procesos */}
+
+        <Route 
+          path="/procesos/cambio-pilotos" 
+          element={isAuthenticated ? <CambioPilotos /> : <Navigate to="/login" />} 
+        />
+       
       </Routes>
     </div>
   );

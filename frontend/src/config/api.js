@@ -52,6 +52,80 @@ CLIENTES: {
   CATALOGO: '/api/clientes/cat'
 },
 
+// Endpoints de check-master
+CHECK_MASTER: {
+  LIST: '/api/check-master',
+  CREATE: '/api/check-master',
+  UPDATE: (id) => `/api/check-master/${id}`,
+  DELETE: (id) => `/api/check-master/${id}`,
+  GET: (id) => `/api/check-master/${id}`,
+  CATALOGO: '/api/check-master/cat'
+},
+
+// Endpoints de tipos de vehículos
+TIPOS_VEHICULOS: {
+  LIST: '/api/tipos-vehiculos',
+  CREATE: '/api/tipos-vehiculos',
+  UPDATE: (id) => `/api/tipos-vehiculos/${id}`,
+  DELETE: (id) => `/api/tipos-vehiculos/${id}`,
+  GET: (id) => `/api/tipos-vehiculos/${id}`,
+  CATALOGO: '/api/tipos-vehiculos/cat'
+},
+
+  // //////////////  operaciones  //////////////
+  // Endpoints de repuestos
+  REPUESTOS: {
+    LIST: '/api/repuestos',
+    CREATE: '/api/repuestos',
+    UPDATE: (id) => `/api/repuestos/${id}`,
+    DELETE: (id) => `/api/repuestos/${id}`,
+    GET: (id) => `/api/repuestos/${id}`
+  },
+
+  // Endpoints de salidas
+  SALIDAS: {
+    LIST: '/api/salidas',
+    CREATE: '/api/salidas',
+    UPDATE: (id) => `/api/salidas/${id}`,
+    DELETE: (id) => `/api/salidas/${id}`,
+    GET: (id) => `/api/salidas/${id}`
+  },
+
+  // Endpoints de servicios
+  SERVICIOS: {
+    LIST: '/api/servicios',
+    CREATE: '/api/servicios',
+    UPDATE: (id) => `/api/servicios/${id}`,
+    DELETE: (id) => `/api/servicios/${id}`,
+    GET: (id) => `/api/servicios/${id}`
+  },
+
+
+  // Endpoints de ingreso de repuestos
+  INGRESO_REPUESTOS: {
+    LIST: '/api/ingreso-repuestos',
+    CREATE: '/api/ingreso-repuestos',
+    UPDATE: (id) => `/api/ingreso-repuestos/${id}`,
+    DELETE: (id) => `/api/ingreso-repuestos/${id}`,
+    GET: (id) => `/api/ingreso-repuestos/${id}`
+  },
+
+// //////////////  operaciones  //////////////
+  
+
+
+// //////////////  Procesos  //////////////
+  // Endpoints de cambio de pilotos
+  CAMBIO_PILOTOS: {
+    LIST: '/api/cambio-pilotos',
+    CREATE: '/api/cambio-pilotos',
+    UPDATE: (id) => `/api/cambio-pilotos/${id}`,
+    DELETE: (id) => `/api/cambio-pilotos/${id}`,
+    GET: (id) => `/api/cambio-pilotos/${id}`
+  },
+
+// //////////////  Procesos  //////////////
+
 
   // Endpoints de tareas
   TASKS: {

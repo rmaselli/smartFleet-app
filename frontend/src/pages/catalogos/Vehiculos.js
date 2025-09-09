@@ -48,6 +48,7 @@ const Vehiculos = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState(null);
   const [pilotos, setPilotos] = useState([]);
+  const [tiposVehiculos, setTiposVehiculos] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -57,15 +58,18 @@ const Vehiculos = () => {
     placa_id: '',
     modelo: '',
     anio_vehiculo: new Date().getFullYear(),
-    tipo_vehiculo: '',
+    tipo_vehiculo: 1,
     estado: 'ACT',
     color: '',
     motor: '',
     chasis: '',
-    kilometraje: '',
-    tipo_combustible: '',
+    kilometraje: 0,
+    tipo_combustible: 'Gasolina',
     capacidad_carga: '',
-    id_piloto: '',
+    id_piloto: 1,
+    fe_compra: '',
+    fecha_proximo_servicio: '',
+    gasto_total_servicios: '',
     //ultima_lectura: '',
     observaciones: ''
   });
@@ -82,7 +86,9 @@ const Vehiculos = () => {
     { value: 'ACT', label: 'Activo' },
     { value: 'MNT', label: 'En Mantenimiento' },
     { value: 'INA', label: 'Inactivo' },
-    { value: 'REP', label: 'En Reparación' }
+    { value: 'REP', label: 'En Reparación' },
+    { value: 'VND', label: 'Vendido' },
+    { value: 'MES', label: 'Mal estado ' }
   ];
 
   // Tipos de vehículo
@@ -171,8 +177,22 @@ const Vehiculos = () => {
   useEffect(() => {
     loadVehicles();
     loadPilotos();
+    loadTiposVehiculos();
   }, []);
 
+
+  // Cargar tipos de vehículos
+  const loadTiposVehiculos = async () => {
+    try {
+      const response = await axiosInstance.get(API_CONFIG.TIPOS_VEHICULOS.LIST);
+      if (response.data.success) {
+        setTiposVehiculos(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error cargando tipos de vehículos:', error);
+    }
+  };
+  
   // Filtrar vehículos
   const filteredVehicles = vehicles.filter(vehicle => {
     const matchesSearch = vehicle.placa_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -196,6 +216,7 @@ const Vehiculos = () => {
     if (!formData.anio_vehiculo) errors.anio_vehiculo = 'El año es requerido';
     if (!formData.tipo_vehiculo.trim()) errors.tipo_vehiculo = 'El tipo de vehículo es requerido';
     if (!formData.estado) errors.estado = 'El estado es requerido';
+    //if (formData.umbral_servicio<101 || formData.umbral_servicio<0) errors.umbral_servicio = 'El umbral de servicio debe ser 0 a 100';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -235,7 +256,8 @@ const Vehiculos = () => {
       kilometraje: '',
       tipo_combustible: '',
       capacidad_carga: '',
-      id_piloto: '',
+      id_piloto: 1,
+      fe_compra: '',
       ultima_lectura: '',
       observaciones: '',
       fe_registro: ''
@@ -262,7 +284,8 @@ const Vehiculos = () => {
       kilometraje: vehicle.kilometraje || '',
       tipo_combustible: vehicle.tipo_combustible || '',
       capacidad_carga: vehicle.capacidad_carga || '',
-      id_piloto: vehicle.id_piloto || '',
+      id_piloto: vehicle.id_piloto,
+      fe_compra: vehicle.fe_compra || '',
       ultima_lectura: vehicle.ultima_lectura || '',
       observaciones: vehicle.observaciones || '',
       fe_registro: vehicle.fe_registro || '',
@@ -292,7 +315,8 @@ const Vehiculos = () => {
       kilometraje: '',
       tipo_combustible: '',
       capacidad_carga: '',
-      id_piloto: '',
+      id_piloto: 1,
+      fe_compra: '',
       ultima_lectura: '',
       observaciones: ''
     });
@@ -400,6 +424,10 @@ const Vehiculos = () => {
         return 'bg-red-100 text-red-800';
       case 'REP':
         return 'bg-orange-100 text-orange-800';
+      case 'VND':
+        return 'bg-red-100 text-red-800';
+      case 'MES':
+        return 'bg-gray-100 text-fuchsia-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -600,22 +628,21 @@ const Vehiculos = () => {
               {/* Tipo de Vehículo */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tipo de Vehículo *
+                  Tipo de Vehículo
                 </label>
                 <select
                   name="tipo_vehiculo"
-                  value={formData.tipo_vehiculo}
+                  value={formData.tipo_vehiculo || ''}
                   onChange={handleFormChange}
-                  className={`input ${formErrors.tipo_vehiculo ? 'border-red-500' : ''}`}
+                  className="input"
                 >
-                  <option value="">Seleccionar tipo</option>
-                  {tiposVehiculo.map(tipo_vehiculo => (
-                    <option key={tipo_vehiculo} value={tipo_vehiculo}>{tipo_vehiculo}</option>
+                  <option value="">Seleccionar tipo de vehículo</option>
+                  {tiposVehiculos.map(TipoVehiculo => (
+                    <option key={TipoVehiculo.id_tipo_vehiculo} value={TipoVehiculo.id_tipo_vehiculo}>
+                      {TipoVehiculo.desc_tipo_vehiculo} - {TipoVehiculo.id_tipo_vehiculo}
+                    </option>
                   ))}
                 </select>
-                {formErrors.tipo_vehiculo && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.tipo_vehiculo}</p>
-                )}
               </div>
 
               {/* Estado */}
@@ -727,7 +754,7 @@ const Vehiculos = () => {
                 </label>
                 <select
                   name="id_piloto"
-                  value={formData.id_piloto || ''}
+                  value={formData.id_piloto}
                   onChange={handleFormChange}
                   className="input"
                 >
@@ -740,7 +767,14 @@ const Vehiculos = () => {
                 </select>
               </div>
 
-              
+              {/* Fecha de Compra */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Fecha de Compra
+                </label>
+                <input type="date" name="fe_compra" value={formData.fe_compra} onChange={handleFormChange} className="input" />
+              </div>
+
               {/* Combustible */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -775,6 +809,8 @@ const Vehiculos = () => {
               </div>
 
               {/* Umbral de Servicio */}
+              
+
               <div>
                 <label className="block text-red-500 text-sm font-medium text-slate-700 mb-2">
                   % Umbral de Servicio
@@ -829,17 +865,51 @@ const Vehiculos = () => {
                   Ultimo Servicio Taller
                   </label>
                 <input
-                  type="number"
+                  type="text"
                   name="ultimo_servicio_taller"
                   value={formData.ultimo_servicio_taller}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="2020-09-01"
+                  readOnly
+                />
+              </div>
+
+
+              {/* Fecha proximo servicio */}
+              <div>
+                <label className="block text-sm mb-2 text-red-500 font-bold">
+                  Fecha Proximo Servicio
+                  </label>
+                <input
+                  type="date"
+                  name="fecha_proximo_servicio"
+                  value={formData.fecha_proximo_servicio}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="2025-10-10"
+                  readOnly
+                />
+              </div>
+
+              {/* Gasto Total Servicio */}
+              <div>
+                <label className="block text-sm mb-2 text-red-500 font-bold">
+                  Gasto Total Servicios
+                  </label>
+                <input
+                  type="number"
+                  name="gasto_total"
+                  value={formData.gasto_total}
                   onChange={handleFormChange}
                   className="input"
                   placeholder="1000"
                   readOnly
                 />
-              </div>
+              </div>              
 
             </div>
+
 
 
 
