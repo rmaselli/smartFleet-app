@@ -147,6 +147,12 @@ const MainNavigation = () => {
           path: '/operaciones/salidas'
         },
         {
+          id: 'hoja-es',
+          label: 'Hoja de Salida',
+          icon: <FileText className="h-4 w-4" />,
+          path: '/operaciones/salidas/hoja-es'
+        },
+        {
           id: 'servicios',
           label: 'Servicios',
           icon: <Wrench className="h-4 w-4" />,

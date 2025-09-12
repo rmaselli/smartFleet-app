@@ -16,6 +16,7 @@ import CheckMaster from './pages/catalogos/Check-master';
 import TiposVehiculos from './pages/catalogos/Tipos-vehiculos';
 // Operaciones
 import Salidas from './pages/operaciones/Salidas';
+import HojaES from './pages/operaciones/HojaES';
 import Servicios from './pages/operaciones/Servicios';
 import Repuestos from './pages/operaciones/Repuestos';
 import IngresoRepuestos from './pages/operaciones/Ingreso-repuestos';
@@ -99,6 +100,10 @@ function App() {
         <Route 
           path="/operaciones/salidas" 
           element={isAuthenticated ? <Salidas /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/operaciones/salidas/hoja-es" 
+          element={isAuthenticated ? <HojaES /> : <Navigate to="/login" />} 
         />
 
        

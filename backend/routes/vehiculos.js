@@ -132,6 +132,7 @@ router.post('/', auth, [
     }
 
     // Insertar nuevo vehículo
+    pool.
     const [result] = await pool.execute(
       `INSERT INTO FLVEHI.FLVEH_M001 (
         id_empresa, id_sede, marca_vehiculo, placa_id,  modelo, anio_vehiculo, tipo_vehiculo, estado, color, motor, chasis, kilometraje, control_servicio, id_piloto, fe_compra, tipo_combustible, capacidad_carga, ultima_lectura, ultimo_km_taller, ultimo_servicio_taller, umbral_servicio, observaciones, fe_registro, fe_modificacion
@@ -276,6 +277,25 @@ router.put('/:id', auth, [
       message: 'Vehículo actualizado exitosamente',
       data: updatedVehicle[0]
     });
+
+    // Insertar en el log
+      const id_accionLOG = "UPD_VEHICLE";
+      const id_usuarioLOG = req.user.id_usuario;
+      const usuarioLOG = req.user.usuario;
+      const observacionesLOG = 'Actualización de vehículo';
+      const estadoLOG = 'ACT';
+      console.log("🔐 Insertando en el log:", id_empresa, id_accionLOG, id_usuarioLOG, usuarioLOG, observacionesLOG, estadoLOG);
+      await pool.execute(
+        `INSERT INTO FLVEHI.FLVEHI_S099 (
+          id_empresa, id_accion, id_usuario, usuario, observaciones, estado,fe_registro
+        ) VALUES (?, ?, ?, ?,?, ?, ?, CURRENT_TIMESTAMP)`
+        [
+          id_empresa, id_accionLOG, id_usuarioLOG, usuarioLOG, observacionesLOG, estadoLOG
+        ]
+      );
+    // Fin del insert en el log
+
+
 
   } catch (error) {
     console.error('Error updating vehicle:', error);

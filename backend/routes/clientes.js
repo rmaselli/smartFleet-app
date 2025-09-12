@@ -287,6 +287,26 @@ router.put('/:id', auth, [
       message: 'Cliente actualizado exitosamente',
       data: updatedCliente[0]
     });
+console.log("🔐 Insertando en el log:", req.user.id_usuario, req.user.usuario);
+    // Insertar en el log
+    /*
+    const id_accionLOG = "UPD_CLIENTE";
+    const id_usuarioLOG = 1;//req.user.id_usuario;
+    const usuarioLOG = "ADMIN";//req.user.usuario;
+    const observacionesLOG = 'Actualización de cliente';
+    const estadoLOG = 'ACT';
+    console.log("🔐 Insertando en el log:", id_empresa, id_accionLOG, id_usuarioLOG, usuarioLOG, observacionesLOG, estadoLOG);
+    await pool.execute(
+      `INSERT INTO FLVEHI.FLVEHI_S099 (
+        id_empresa, id_accion, id_usuario, usuario, observaciones, estado,fe_registro
+      ) VALUES (?, ?, ?, ?,?, ?, CURRENT_TIMESTAMP)`
+      [
+        id_empresa, id_accionLOG, id_usuarioLOG, usuarioLOG, observacionesLOG, estadoLOG
+      ]
+    );
+    */
+  // Fin del insert en el log
+
 
   } catch (error) {
     console.error('Error updating cliente:', error);

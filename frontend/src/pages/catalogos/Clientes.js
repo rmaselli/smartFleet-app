@@ -247,7 +247,8 @@ const Clientes = () => {
       contacto2: cliente.contacto2 || '',
       tel_contacto1: cliente.tel_contacto1 || '',
       tel_contacto2: cliente.tel_contacto2 || '',
-      observaciones: cliente.observaciones || ''
+      observaciones: cliente.observaciones || '',
+      estado: cliente.estado || ''
     });
     setFormErrors({});
     setEditingCliente(cliente);

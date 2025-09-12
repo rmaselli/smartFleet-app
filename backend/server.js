@@ -17,6 +17,7 @@ const salidasRoutes = require('./routes/operaciones/salidas');
 const serviciosRoutes = require('./routes/operaciones/servicios');
 const repuestosRoutes = require('./routes/operaciones/repuestos');
 const ingresoRepuestosRoutes = require('./routes/operaciones/ingreso-repuestos');
+const hojaESRoutes = require('./routes/operaciones/HojaES');
 // Rutas de Procesos
 const cambioPilotosRoutes = require('./routes/procesos/cambio-pilotos');
 
@@ -69,6 +70,7 @@ app.use('/api/salidas', salidasRoutes);
 app.use('/api/servicios', serviciosRoutes);
 app.use('/api/repuestos', repuestosRoutes);
 app.use('/api/ingreso-repuestos', ingresoRepuestosRoutes);
+app.use('/api/hoja-es', hojaESRoutes);
 // Rutas de Procesos
 app.use('/api/cambio-pilotos', cambioPilotosRoutes);
 
