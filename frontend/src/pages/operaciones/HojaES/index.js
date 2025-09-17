@@ -21,6 +21,12 @@ const HojaES = () => {
   const [kilometraje, setKilometraje] = useState('');
   const [observaciones, setObservaciones] = useState('');
   
+  // Nuevos estados para los elementos agregados
+  const [numeroHoja, setNumeroHoja] = useState('');
+  const [valeSeleccionado, setValeSeleccionado] = useState('');
+  const [porcentajeTanque, setPorcentajeTanque] = useState(0);
+  const [imagenKilometraje, setImagenKilometraje] = useState(null);
+  
   // Estados de datos
   const [pilotos, setPilotos] = useState([]);
   const [vehiculos, setVehiculos] = useState([]);
@@ -40,7 +46,7 @@ const HojaES = () => {
   // Validar formulario
   useEffect(() => {
     validateForm();
-  }, [pilotoSeleccionado, vehiculoSeleccionado, kilometraje, clienteSeleccionado]);
+  }, [pilotoSeleccionado, vehiculoSeleccionado, kilometraje, clienteSeleccionado, porcentajeTanque, valeSeleccionado, imagenKilometraje]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -75,6 +81,11 @@ const HojaES = () => {
       newErrors.kilometraje = `El kilometraje no puede ser menor a ${kilometrajeActual}`;
     }
     if (!clienteSeleccionado) newErrors.cliente = 'Cliente es requerido';
+    
+    // Validaciones para los nuevos campos
+    if (porcentajeTanque === 0) newErrors.porcentajeTanque = 'Nivel de combustible es requerido';
+    if (!valeSeleccionado) newErrors.vale = 'Vale de combustible es requerido';
+    if (!imagenKilometraje) newErrors.imagen = 'Foto del kilometraje es requerida';
 
     setErrors(newErrors);
     setIsFormValid(Object.keys(newErrors).length === 0);
@@ -130,18 +141,38 @@ const HojaES = () => {
 
     setLoading(true);
     try {
+      // Obtener el siguiente número de hoja antes de crear la hoja
+      const siguienteHojaResponse = await axiosInstance.get('/api/hoja-es/siguiente-hoja');
+      const id_hoja = siguienteHojaResponse.data.data.id_hoja;
+      
+      // Actualizar el estado local con el número generado
+      setNumeroHoja(id_hoja);
+
       // Crear la hoja principal
       const hojaData = {
-        id_cliente: clienteSeleccionado,
+        id_plataforma: clienteSeleccionado,
         id_piloto: parseInt(pilotoSeleccionado),
         id_vehiculo: parseInt(vehiculoSeleccionado),
         placa_id: vehiculos.find(v => v.id_vehiculo === parseInt(vehiculoSeleccionado))?.placa_id || '',
         lectura_km_num: parseInt(kilometraje),
-        observaciones
+        observaciones,
+        vale_id: parseInt(valeSeleccionado),
+        porcentaje_tanque: porcentajeTanque,
+        lectura_km_pic: imagenKilometraje?.preview || ''
       };
 
+      console.log('📊 Datos a enviar:', hojaData);
+      console.log('📊 Validación de tipos:', {
+        id_plataforma: typeof hojaData.id_plataforma,
+        id_piloto: typeof hojaData.id_piloto,
+        id_vehiculo: typeof hojaData.id_vehiculo,
+        placa_id: typeof hojaData.placa_id,
+        lectura_km_num: typeof hojaData.lectura_km_num,
+        vale_id: typeof hojaData.vale_id,
+        porcentaje_tanque: typeof hojaData.porcentaje_tanque
+      });
+
       const hojaResponse = await axiosInstance.post('/api/hoja-es/hoja', hojaData);
-      const id_hoja = hojaResponse.data.data.id_hoja;
 
       // Agregar items revisados
       for (const item of itemsRevisados) {
@@ -159,6 +190,10 @@ const HojaES = () => {
       setVehiculoSeleccionado('');
       setKilometraje('');
       setObservaciones('');
+      setValeSeleccionado('');
+      setPorcentajeTanque(0);
+      setImagenKilometraje(null);
+      setNumeroHoja('');
       setItemsRevisados([]);
       
       // Recargar items de checklist desde la base de datos
@@ -183,6 +218,10 @@ const HojaES = () => {
       setVehiculoSeleccionado('');
       setKilometraje('');
       setObservaciones('');
+      setValeSeleccionado('');
+      setPorcentajeTanque(0);
+      setImagenKilometraje(null);
+      setNumeroHoja('');
       setItemsRevisados([]);
       
       // Recargar items de checklist desde la base de datos
@@ -239,6 +278,15 @@ const HojaES = () => {
             vehiculos={vehiculos}
             kilometrajeActual={kilometrajeActual}
             errors={errors}
+            // Nuevos props
+            numeroHoja={numeroHoja}
+            setNumeroHoja={setNumeroHoja}
+            valeSeleccionado={valeSeleccionado}
+            setValeSeleccionado={setValeSeleccionado}
+            porcentajeTanque={porcentajeTanque}
+            setPorcentajeTanque={setPorcentajeTanque}
+            imagenKilometraje={imagenKilometraje}
+            setImagenKilometraje={setImagenKilometraje}
           />
 
           {/* Secciones de Items */}

@@ -1,5 +1,10 @@
-import React from 'react';
-import { Star, User, Truck, Gauge, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star, User, Truck, Gauge, FileText, Fuel } from 'lucide-react';
+import FuelGauge from './FuelGauge';
+import ImageUpload from './ImageUpload';
+import axiosInstance from '../../utils/axiosConfig';
+
+
 
 const HeaderSection = ({
   clienteSeleccionado,
@@ -15,36 +20,88 @@ const HeaderSection = ({
   pilotos,
   vehiculos,
   kilometrajeActual,
-  errors
+  errors,
+  // Nuevos props
+  numeroHoja,
+  setNumeroHoja,
+  valeSeleccionado,
+  setValeSeleccionado,
+  porcentajeTanque,
+  setPorcentajeTanque,
+  imagenKilometraje,
+  setImagenKilometraje
 }) => {
+  // Debug: Verificar props recibidos
+  console.log('HeaderSection props:', {
+    porcentajeTanque,
+    setPorcentajeTanque: typeof setPorcentajeTanque,
+    valeSeleccionado,
+    setValeSeleccionado: typeof setValeSeleccionado
+  });
+
+  // Estados locales
+  const [valesCombustible, setValesCombustible] = useState([]);
+  const [loadingVales, setLoadingVales] = useState(false);
+  const [loadingHoja, setLoadingHoja] = useState(false);
+
+  // Cargar vales de combustible al montar el componente
+  useEffect(() => {
+    loadValesCombustible();
+  }, []);
+
+  const loadValesCombustible = async () => {
+    setLoadingVales(true);
+    try {
+      const response = await axiosInstance.get('/api/hoja-es/vales-combustible');
+      setValesCombustible(response.data.data || []);
+    } catch (error) {
+      console.error('Error loading vales combustible:', error);
+    } finally {
+      setLoadingVales(false);
+    }
+  };
+
+  const handleImageChange = (file, preview) => {
+    setImagenKilometraje({ file, preview });
+  };
   return (
     <div className="bg-gray-800 text-white p-6 rounded-lg">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold">Header</h2>
+      
+        
+        {/* Campo Hoja No. */}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-6x1 font-medium">Hoja No.</span>
+            <div className="text-6x1 px-3 py-1 bg-gray-700 rounded-lg min-w-[60px] text-center">
+              {numeroHoja || '---'}
+            </div>
+          </div>
+        </div>
         
         {/* Botones de Cliente */}
         <div className="flex space-x-2">
           <button
-            onClick={() => setClienteSeleccionado('DYA')}
+            onClick={() => setClienteSeleccionado('YANGO')}
             className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-              clienteSeleccionado === 'DYA' 
-                ? 'bg-gray-600 text-white' 
+              clienteSeleccionado === 'YANGO' 
+                ? 'bg-red-600 text-white' 
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             <Star className="w-4 h-4" />
-            <span>DYA</span>
+            <span>YANGO</span>
           </button>
           <button
-            onClick={() => setClienteSeleccionado('UBR')}
+            onClick={() => setClienteSeleccionado('UBER')}
             className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-              clienteSeleccionado === 'UBR' 
+              clienteSeleccionado === 'UBER' 
                 ? 'bg-green-600 text-white' 
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             <Star className="w-4 h-4" />
-            <span>UBR</span>
+            <span>UBER</span>
           </button>
         </div>
       </div>
@@ -128,7 +185,7 @@ const HeaderSection = ({
         </div>
 
         {/* Observaciones */}
-        <div className="space-y-2 md:col-span-2 lg:col-span-1">
+        <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-300">
             <FileText className="w-4 h-4 inline mr-2" />
             Observaciones
@@ -140,6 +197,71 @@ const HeaderSection = ({
             rows={3}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
+        </div>
+      </div>
+
+      {/* Segunda fila de campos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {/* Gauge de Combustible */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300">
+            <Fuel className="w-4 h-4 inline mr-2" />
+            Nivel de Combustible
+          </label>
+          <div className="bg-gray-700 p-4 rounded-lg">
+            <FuelGauge
+              percentage={porcentajeTanque}
+              onPercentageChange={setPorcentajeTanque}
+            />
+          </div>
+          {errors.porcentajeTanque && (
+            <p className="text-red-400 text-xs">{errors.porcentajeTanque}</p>
+          )}
+        </div>
+
+        {/* Vale de Combustible */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300">
+            <Fuel className="w-4 h-4 inline mr-2" />
+            Vale de Combustible
+          </label>
+          <select
+            value={valeSeleccionado}
+            onChange={(e) => setValeSeleccionado(e.target.value)}
+            disabled={loadingVales}
+            className={`w-full px-3 py-2 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.vale ? 'border-red-500' : 'border-gray-600'
+            } ${loadingVales ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <option value="">
+              {loadingVales ? 'Cargando vales...' : 'Seleccionar vale'}
+            </option>
+            {valesCombustible.map((vale) => (
+              <option key={vale.vale_id} value={vale.vale_id}>
+                {vale.display_text}
+              </option>
+            ))}
+          </select>
+          {errors.vale && (
+            <p className="text-red-400 text-xs">{errors.vale}</p>
+          )}
+        </div>
+
+        {/* Subida de Imagen */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300">
+            <FileText className="w-4 h-4 inline mr-2" />
+            Foto del Kilometraje
+          </label>
+          <div className="bg-gray-700 p-4 rounded-lg">
+            <ImageUpload
+              onImageChange={handleImageChange}
+              currentImage={imagenKilometraje?.preview}
+            />
+          </div>
+          {errors.imagen && (
+            <p className="text-red-400 text-xs">{errors.imagen}</p>
+          )}
         </div>
       </div>
     </div>
