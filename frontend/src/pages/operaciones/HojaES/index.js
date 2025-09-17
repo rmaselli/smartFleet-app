@@ -160,7 +160,7 @@ const HojaES = () => {
         porcentaje_tanque: porcentajeTanque,
         lectura_km_pic: imagenKilometraje?.preview || ''
       };
-
+ 
       console.log('📊 Datos a enviar:', hojaData);
       console.log('📊 Validación de tipos:', {
         id_plataforma: typeof hojaData.id_plataforma,
