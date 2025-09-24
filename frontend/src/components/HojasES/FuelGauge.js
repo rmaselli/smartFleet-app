@@ -11,7 +11,7 @@ const FuelGauge = ({
     console.error('FuelGauge: onPercentageChange debe ser una función, recibido:', typeof onPercentageChange);
     return <div>Error: onPercentageChange no es una función</div>;
   }
-  // Calcular el ángulo de la aguja (0-180 grados)
+  // Calcular el ángulo de la aguja (0-180 grados, de izquierda a derecha)
   const angle = (percentage / 100) * 180;
   
   // Determinar el color basado en el porcentaje
@@ -64,12 +64,12 @@ const FuelGauge = ({
             strokeLinecap="round"
           />
           
-          {/* Aguja */}
+          {/* Aguja - Corregida para ir de izquierda a derecha */}
           <line
             x1="60"
             y1="70"
-            x2={60 + 40 * Math.cos((angle - 360) * Math.PI / 180)}
-            y2={70 - 40 * Math.sin((angle - 360) * Math.PI / 180)}
+            x2={60 + 40 * Math.cos((180 - angle) * Math.PI / 180)}
+            y2={70 - 40 * Math.sin((180 - angle) * Math.PI / 180)}
             stroke={gaugeColor}
             strokeWidth="3"
             strokeLinecap="round"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, BrowserRouter } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
@@ -17,6 +17,7 @@ import TiposVehiculos from './pages/catalogos/Tipos-vehiculos';
 // Operaciones
 import Salidas from './pages/operaciones/Salidas';
 import HojaES from './pages/operaciones/HojaES';
+import AutorizacionHojasES from './pages/operaciones/AutorizacionHojasES';
 import Servicios from './pages/operaciones/Servicios';
 import Repuestos from './pages/operaciones/Repuestos';
 import IngresoRepuestos from './pages/operaciones/Ingreso-repuestos';
@@ -105,8 +106,11 @@ function App() {
           path="/operaciones/salidas/hoja-es" 
           element={isAuthenticated ? <HojaES /> : <Navigate to="/login" />} 
         />
+        <Route 
+          path="/operaciones/salidas/autorizacion-hojas" 
+          element={isAuthenticated ? <AutorizacionHojasES /> : <Navigate to="/login" />} 
+        />
 
-       
         <Route 
           path="/operaciones/servicios" 
           element={isAuthenticated ? <Servicios /> : <Navigate to="/login" />} 

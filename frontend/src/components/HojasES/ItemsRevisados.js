@@ -1,7 +1,7 @@
 import React from 'react';
-import { Star, X, FileText, Trash2 } from 'lucide-react';
+import { Star, X, FileText, Trash2, Image } from 'lucide-react';
 
-const ItemsRevisados = ({ items, onQuitarItem, onAnotacion, loading }) => {
+const ItemsRevisados = ({ items, onQuitarItem, onAnotacion, onFoto, loading }) => {
   return (
     <div className="bg-white border border-gray-200 rounded-lg">
       {/* Header */}
@@ -27,7 +27,7 @@ const ItemsRevisados = ({ items, onQuitarItem, onAnotacion, loading }) => {
               <div
                 key={item.id_check}
                 className={`p-3 border rounded-lg transition-colors ${
-                  item.anotacion 
+                  item.anotacion || item.tiene_foto
                     ? 'bg-yellow-200 border-yellow-300' 
                     : 'bg-pink-50 border-pink-200'
                 }`}
@@ -39,7 +39,15 @@ const ItemsRevisados = ({ items, onQuitarItem, onAnotacion, loading }) => {
                     </div>
                     <div>
                        <span className="text-gray-800 font-medium flex flex-col">
-                         {item.desc_check || '-->' || item.cod_abreviado || `Item ${item.id_check}`}
+                         <div className="flex items-center space-x-2">
+                           <span>{item.desc_check || '-->' || item.cod_abreviado || `Item ${item.id_check}`}</span>
+                           {item.tiene_foto && (
+                             <div className="flex items-center space-x-1">
+                               <Image className="w-4 h-4 text-blue-600" />
+                               <span className="text-xs text-blue-600 font-medium">Foto</span>
+                             </div>
+                           )}
+                         </div>
                          <div className="text-xs text-slate-900">Abrev: <span className="text-xs text-gray-500">{item.cod_abreviado}</span>
                         </div>
                        </span>
@@ -67,7 +75,17 @@ const ItemsRevisados = ({ items, onQuitarItem, onAnotacion, loading }) => {
                     >
                       <FileText className="w-4 h-4" />
                       <span>Notas</span>
+                      
                     </button>
+                    <button
+                      onClick={() => onFoto(item)}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 text-sm font-medium"
+                    >
+                      <Image className="w-4 h-4" />
+                      <span>Foto</span>
+                    </button>
+
+
                   </div>
                 </div>
               </div>

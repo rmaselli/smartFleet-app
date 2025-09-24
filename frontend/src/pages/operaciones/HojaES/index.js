@@ -6,6 +6,9 @@ import HeaderSection from '../../../components/HojasES/HeaderSection';
 import ItemsList from '../../../components/HojasES/ItemsList';
 import ItemsRevisados from '../../../components/HojasES/ItemsRevisados';
 import ModalAnotaciones from '../../../components/HojasES/ModalAnotaciones';
+import ModalFotos from '../../../components/HojasES/ModalFotos';
+import ModalFotoItem from '../../../components/HojasES/ModalFotoItem';
+import ModalConfirmacionHoja from '../../../components/HojasES/ModalConfirmacionHoja';
 import axiosInstance from '../../../utils/axiosConfig';
 
 const HojaES = () => {
@@ -13,9 +16,15 @@ const HojaES = () => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [showFotosModal, setShowFotosModal] = useState(false);
+  const [showFotoItemModal, setShowFotoItemModal] = useState(false);
+  const [showConfirmacionModal, setShowConfirmacionModal] = useState(false);
+  const [numeroHojaModal, setNumeroHojaModal] = useState('');
+  const [selectedItemForFoto, setSelectedItemForFoto] = useState(null);
   
   // Estados del encabezado
   const [clienteSeleccionado, setClienteSeleccionado] = useState('UBR');
+  const [plataformaSeleccionada, setPlataformaSeleccionada] = useState('UBER');
   const [pilotoSeleccionado, setPilotoSeleccionado] = useState('');
   const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState('');
   const [kilometraje, setKilometraje] = useState('');
@@ -23,9 +32,15 @@ const HojaES = () => {
   
   // Nuevos estados para los elementos agregados
   const [numeroHoja, setNumeroHoja] = useState('');
-  const [valeSeleccionado, setValeSeleccionado] = useState('');
   const [porcentajeTanque, setPorcentajeTanque] = useState(0);
-  const [imagenKilometraje, setImagenKilometraje] = useState(null);
+  
+  // Estados para fotos
+  const [fotosCargadas, setFotosCargadas] = useState(0);
+  const [fotosFaltantes, setFotosFaltantes] = useState(5);
+  const [fotosData, setFotosData] = useState([]);
+  
+  // Estados para fotos de items en memoria
+  const [fotosItemsPendientes, setFotosItemsPendientes] = useState([]);
   
   // Estados de datos
   const [pilotos, setPilotos] = useState([]);
@@ -43,10 +58,25 @@ const HojaES = () => {
     loadInitialData();
   }, []);
 
+  // Actualizar plataforma cuando cambie el cliente
+  useEffect(() => {
+    console.log('🔍 Cliente seleccionado:', clienteSeleccionado);
+    if (clienteSeleccionado === 'UBR') {
+      setPlataformaSeleccionada('UBER');
+      console.log('✅ Plataforma establecida: UBER');
+    } else if (clienteSeleccionado === 'YANGO') {
+      setPlataformaSeleccionada('YANGO');
+      console.log('✅ Plataforma establecida: YANGO');
+    } else {
+      setPlataformaSeleccionada('UBER'); // Default
+      console.log('⚠️ Plataforma por defecto: UBER');
+    }
+  }, [clienteSeleccionado]);
+
   // Validar formulario
   useEffect(() => {
     validateForm();
-  }, [pilotoSeleccionado, vehiculoSeleccionado, kilometraje, clienteSeleccionado, porcentajeTanque, valeSeleccionado, imagenKilometraje]);
+  }, [pilotoSeleccionado, vehiculoSeleccionado, kilometraje, clienteSeleccionado, porcentajeTanque, fotosCargadas]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -84,8 +114,7 @@ const HojaES = () => {
     
     // Validaciones para los nuevos campos
     if (porcentajeTanque === 0) newErrors.porcentajeTanque = 'Nivel de combustible es requerido';
-    if (!valeSeleccionado) newErrors.vale = 'Vale de combustible es requerido';
-    if (!imagenKilometraje) newErrors.imagen = 'Foto del kilometraje es requerida';
+    if (fotosCargadas !== 5) newErrors.fotos = 'Se requieren 5 fotos de la motocicleta';
 
     setErrors(newErrors);
     setIsFormValid(Object.keys(newErrors).length === 0);
@@ -133,6 +162,103 @@ const HojaES = () => {
     setSelectedItem(null);
   };
 
+  const handleOpenFotosModal = () => {
+    setShowFotosModal(true);
+  };
+
+  const handleSaveFotos = async (fotosArray) => {
+    try {
+      setLoading(true);
+      
+      // Convertir archivos a base64
+      const fotosConBase64 = await Promise.all(
+        fotosArray.map(async (foto) => {
+          const base64 = await fileToBase64(foto.foto);
+          return {
+            ...foto,
+            foto: base64
+          };
+        })
+      );
+
+      // Almacenar fotos en memoria (no en BD aún)
+      setFotosData(fotosConBase64);
+      setFotosCargadas(5);
+      setFotosFaltantes(0);
+      
+      // Cerrar modal
+      setShowFotosModal(false);
+      
+      // Mostrar mensaje de éxito
+      alert('Fotos guardadas en memoria. Se guardarán en BD al finalizar la hoja.');
+      
+    } catch (error) {
+      console.error('Error processing fotos:', error);
+      alert('Error al procesar las fotos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]); // Remover el prefijo data:image/...
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleFotoItem = (item) => {
+    setSelectedItemForFoto(item);
+    setShowFotoItemModal(true);
+  };
+
+  const handleSaveFotoItem = async (fotoData) => {
+    try {
+      setLoading(true);
+      
+      // Convertir archivo a base64
+      const base64 = await fileToBase64(fotoData.file);
+
+      // Almacenar foto en memoria (no en BD aún)
+      const fotoItem = {
+        id_check: selectedItemForFoto.id_check,
+        foto: base64,
+        nombre_archivo: fotoData.nombre_archivo,
+        tamano_archivo: fotoData.tamano_archivo,
+        tipo_mime: fotoData.tipo_mime,
+        desc_check: selectedItemForFoto.desc_check
+      };
+
+      // Actualizar fotos pendientes en memoria
+      setFotosItemsPendientes(prev => {
+        // Remover foto existente del mismo item si existe
+        const fotosFiltradas = prev.filter(f => f.id_check !== selectedItemForFoto.id_check);
+        // Agregar nueva foto
+        return [...fotosFiltradas, fotoItem];
+      });
+
+      // Actualizar el estado visual del item para mostrar que tiene foto
+      setItemsRevisados(prev => 
+        prev.map(item => 
+          item.id_check === selectedItemForFoto.id_check 
+            ? { ...item, tiene_foto: true }
+            : item
+        )
+      );
+      
+      // Mostrar mensaje de éxito
+      alert('Foto del item guardada en memoria. Se guardará en BD al finalizar la hoja.');
+      
+    } catch (error) {
+      console.error('Error processing foto item:', error);
+      alert('Error al procesar la foto del item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleListo = async () => {
     if (!isFormValid || itemsRevisados.length === 0) {
       alert('Por favor complete todos los campos requeridos y revise al menos un item');
@@ -141,14 +267,7 @@ const HojaES = () => {
 
     setLoading(true);
     try {
-      // Obtener el siguiente número de hoja antes de crear la hoja
-      const siguienteHojaResponse = await axiosInstance.get('/api/hoja-es/siguiente-hoja');
-      const id_hoja = siguienteHojaResponse.data.data.id_hoja;
-      
-      // Actualizar el estado local con el número generado
-      setNumeroHoja(id_hoja);
-
-      // Crear la hoja principal
+      // Crear la hoja principal (el backend maneja la generación del ID internamente)
       const hojaData = {
         id_plataforma: clienteSeleccionado,
         id_piloto: parseInt(pilotoSeleccionado),
@@ -156,9 +275,8 @@ const HojaES = () => {
         placa_id: vehiculos.find(v => v.id_vehiculo === parseInt(vehiculoSeleccionado))?.placa_id || '',
         lectura_km_num: parseInt(kilometraje),
         observaciones,
-        vale_id: parseInt(valeSeleccionado),
         porcentaje_tanque: porcentajeTanque,
-        lectura_km_pic: imagenKilometraje?.preview || ''
+        lectura_km_pic: '' // Ya no usamos esta imagen individual
       };
  
       console.log('📊 Datos a enviar:', hojaData);
@@ -168,11 +286,16 @@ const HojaES = () => {
         id_vehiculo: typeof hojaData.id_vehiculo,
         placa_id: typeof hojaData.placa_id,
         lectura_km_num: typeof hojaData.lectura_km_num,
-        vale_id: typeof hojaData.vale_id,
         porcentaje_tanque: typeof hojaData.porcentaje_tanque
       });
 
       const hojaResponse = await axiosInstance.post('/api/hoja-es/hoja', hojaData);
+      const id_hoja = hojaResponse.data.data.id_hoja;
+      
+      console.log('📋 ID de hoja obtenido del backend:', id_hoja, 'tipo:', typeof id_hoja);
+      
+      // Actualizar el estado local con el número generado por el backend
+      setNumeroHoja(id_hoja);
 
       // Agregar items revisados
       for (const item of itemsRevisados) {
@@ -183,16 +306,44 @@ const HojaES = () => {
         });
       }
 
-      alert('Hoja de salida creada exitosamente');
-      
+      // Guardar fotos de motocicleta en la BD (ahora que tenemos id_hoja)
+      if (fotosData.length === 5) {
+        try {
+          await axiosInstance.post('/api/hoja-es/subir-fotos', {
+            id_hoja,
+            fotos: fotosData
+          });
+        } catch (error) {
+          console.error('Error guardando fotos de motocicleta:', error);
+        }
+      }
+
+      // Guardar fotos de items en la BD (ahora que tenemos id_hoja)
+      for (const fotoItem of fotosItemsPendientes) {
+        try {
+          await axiosInstance.post('/api/hoja-es/subir-foto-item', {
+            id_hoja,
+            id_check: fotoItem.id_check,
+            foto: fotoItem.foto,
+            nombre_archivo: fotoItem.nombre_archivo,
+            tamano_archivo: fotoItem.tamano_archivo,
+            tipo_mime: fotoItem.tipo_mime
+          });
+        } catch (error) {
+          console.error(`Error guardando foto del item ${fotoItem.desc_check}:`, error);
+        }
+      }
+
       // Resetear formulario
       setPilotoSeleccionado('');
       setVehiculoSeleccionado('');
       setKilometraje('');
       setObservaciones('');
-      setValeSeleccionado('');
       setPorcentajeTanque(0);
-      setImagenKilometraje(null);
+      setFotosCargadas(0);
+      setFotosFaltantes(5);
+      setFotosData([]);
+      setFotosItemsPendientes([]);
       setNumeroHoja('');
       setItemsRevisados([]);
       
@@ -203,6 +354,12 @@ const HojaES = () => {
       } catch (error) {
         console.error('Error reloading items:', error);
       }
+      
+      // Mostrar modal de confirmación después de que todo esté procesado
+      console.log('📋 Mostrando modal con numeroHoja:', id_hoja);
+      // Establecer el número de hoja para el modal
+      setNumeroHojaModal(id_hoja);
+      setShowConfirmacionModal(true);
       
     } catch (error) {
       console.error('Error creating hoja:', error);
@@ -218,9 +375,11 @@ const HojaES = () => {
       setVehiculoSeleccionado('');
       setKilometraje('');
       setObservaciones('');
-      setValeSeleccionado('');
       setPorcentajeTanque(0);
-      setImagenKilometraje(null);
+      setFotosCargadas(0);
+      setFotosFaltantes(5);
+      setFotosData([]);
+      setFotosItemsPendientes([]);
       setNumeroHoja('');
       setItemsRevisados([]);
       
@@ -232,6 +391,11 @@ const HojaES = () => {
         console.error('Error reloading items:', error);
       }
     }
+  };
+
+  const handleCerrarConfirmacion = () => {
+    setShowConfirmacionModal(false);
+    setNumeroHojaModal('');
   };
 
   if (loading && pilotos.length === 0) {
@@ -281,12 +445,12 @@ const HojaES = () => {
             // Nuevos props
             numeroHoja={numeroHoja}
             setNumeroHoja={setNumeroHoja}
-            valeSeleccionado={valeSeleccionado}
-            setValeSeleccionado={setValeSeleccionado}
             porcentajeTanque={porcentajeTanque}
             setPorcentajeTanque={setPorcentajeTanque}
-            imagenKilometraje={imagenKilometraje}
-            setImagenKilometraje={setImagenKilometraje}
+            // Props para fotos
+            fotosCargadas={fotosCargadas}
+            fotosFaltantes={fotosFaltantes}
+            onOpenFotosModal={handleOpenFotosModal}
           />
 
           {/* Secciones de Items */}
@@ -303,6 +467,7 @@ const HojaES = () => {
               items={itemsRevisados}
               onQuitarItem={handleQuitarItem}
               onAnotacion={handleAnotacion}
+              onFoto={handleFotoItem}
               loading={loading}
             />
           </div>
@@ -332,6 +497,34 @@ const HojaES = () => {
         onClose={() => setShowModal(false)}
         onSave={handleSaveAnotacion}
         item={selectedItem}
+      />
+
+      {/* Modal de Fotos */}
+      <ModalFotos
+        isOpen={showFotosModal}
+        onClose={() => setShowFotosModal(false)}
+        onSave={handleSaveFotos}
+        idHoja={numeroHoja}
+      />
+
+      {/* Modal de Foto de Item */}
+      <ModalFotoItem
+        isOpen={showFotoItemModal}
+        onClose={() => {
+          setShowFotoItemModal(false);
+          setSelectedItemForFoto(null);
+        }}
+        onSave={handleSaveFotoItem}
+        item={selectedItemForFoto}
+        idHoja={numeroHoja}
+      />
+
+      {/* Modal de confirmación de hoja creada */}
+      <ModalConfirmacionHoja
+        isOpen={showConfirmacionModal}
+        onClose={handleCerrarConfirmacion}
+        numeroHoja={numeroHojaModal}
+        plataforma={plataformaSeleccionada}
       />
     </div>
   );

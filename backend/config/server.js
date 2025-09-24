@@ -11,7 +11,8 @@ const serverConfig = {
   // Configuración de límites
   limits: {
     body: '10mb',          // Límite del body de requests
-    headers: 100,          // Número máximo de headers
+    headers: 200,          // Número máximo de headers
+    headerSize: 16384,     // 16KB para tamaño de headers
     fieldSize: 2 * 1024 * 1024, // 2MB para campos individuales
     files: 5,              // Número máximo de archivos
     fileSize: 5 * 1024 * 1024   // 5MB por archivo

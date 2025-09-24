@@ -108,8 +108,7 @@ router.post('/hoja', auth, [
   body('placa_id').notEmpty().trim().escape(),
   body('lectura_km_num').notEmpty().isInt({ min: 0 }),
   body('observaciones').optional().trim().escape(),
-  body('vale_id').optional().isInt({ min: 1 }),
-  body('porcentaje_combustible').optional().isFloat({ min: 0, max: 100 }),
+  body('porcentaje_tanque').optional().isFloat({ min: 0, max: 100 }),
   body('lectura_km_pic').optional().trim()
 ], async (req, res) => {
   try {
@@ -132,13 +131,12 @@ router.post('/hoja', auth, [
       placa_id,
       lectura_km_num,
       observaciones,
-      vale_id,
-      porcentaje_combustible,
+      porcentaje_tanque,
       lectura_km_pic
     } = req.body;
 
     // Obtener el siguiente ID de hoja usando el procedimiento almacenado
-    await pool.execute('CALL sql_get_seq_num(1, "HOJAEN", @v_seqnum)');
+    await pool.execute('CALL sql_get_seq_num(1, "HOJASA", @v_seqnum)');
     const [result] = await pool.execute('SELECT @v_seqnum as siguiente_numero');
     const id_hoja = result[0].siguiente_numero;
 
@@ -153,8 +151,8 @@ router.post('/hoja', auth, [
       [
         id_hoja, 1, id_plataforma, id_piloto, id_vehiculo, placa_id,
         lectura_km_pic || '', 0, 'S', 0, lectura_km_num,
-        vale_id || null, porcentaje_combustible || null,
-        req.user.id_usuario, observaciones || '', 'ACT'
+        null, porcentaje_tanque || null,
+        req.user.id_usuario, observaciones || '', 'ING'
       ]
     );
 
@@ -199,7 +197,7 @@ router.post('/item-revisado', auth, [
       ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)`,
       [
         id_hoja, 1, id_check, anotacion || '', req.user.id_usuario,
-        '', '', 'ACT'
+        '', '', 'ING'
       ]
     );
 
@@ -252,7 +250,7 @@ router.get('/hoja/:id/items', auth, async (req, res) => {
       `SELECT i.*, c.desc_check
        FROM FLVEHI.FLVEH_T002 i
        LEFT JOIN FLVEHI.FLVEH_M007 c ON i.id_check = c.id_check
-       WHERE i.id_hoja = ? AND i.estado = "ACT"
+       WHERE i.id_hoja = ? AND i.estado = "ING"
        ORDER BY i.fe_registro ASC`,
       [id]
     );
@@ -343,23 +341,299 @@ router.get('/siguiente-hoja', auth, async (req, res) => {
   }
 });
 
-// POST - Subir imagen de kilometraje
-router.post('/subir-imagen', auth, async (req, res) => {
+// POST - Subir múltiples fotos para una hoja
+router.post('/subir-fotos', auth, [
+  body('id_hoja').notEmpty().isInt({ min: 1 }),
+  body('fotos').isArray({ min: 5, max: 5 }),
+  body('fotos.*.tipo_foto').isIn(['lateral_derecha', 'lateral_izquierda', 'frontal', 'trasero', 'odometro']),
+  body('fotos.*.foto').notEmpty()
+], async (req, res) => {
   try {
-    // Esta ruta manejará la subida de imágenes
-    // Por ahora retornamos un placeholder
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false, 
+        errors: errors.array() 
+      });
+    }
+
+    const { id_hoja, fotos } = req.body;
+
+    // Verificar que la hoja existe
+    const [hoja] = await pool.execute(
+      'SELECT id_hoja FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
+      [id_hoja]
+    );
+
+    if (hoja.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Hoja de salida no encontrada'
+      });
+    }
+
+    // Eliminar fotos existentes de esta hoja
+    await pool.execute(
+      'DELETE FROM FLVEHI.FLVEH_F001 WHERE id_hoja = ?',
+      [id_hoja]
+    );
+
+    // Insertar las nuevas fotos
+    for (const foto of fotos) {
+      await pool.execute(
+        `INSERT INTO FLVEHI.FLVEH_F001 (
+          id_hoja, id_empresa, tipo_hoja, foto, id_usuario, 
+          fe_registro, fe_modificacion, estado, tipo_foto, 
+          nombre_archivo, tamano_archivo, tipo_mime
+        ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)`,
+        [
+          id_hoja, 1, 'S', foto.foto, req.user.id_usuario,
+          'ING', foto.tipo_foto, foto.nombre_archivo || '',
+          foto.tamano_archivo || 0, foto.tipo_mime || 'image/jpeg'
+        ]
+      );
+    }
+
     res.json({
       success: true,
-      message: 'Imagen subida exitosamente',
-      data: { 
-        imagen_url: '/uploads/kilometraje_' + Date.now() + '.jpg'
-      }
+      message: 'Fotos subidas exitosamente',
+      data: { fotos_subidas: fotos.length }
     });
+
   } catch (error) {
-    console.error('Error subiendo imagen:', error);
+    console.error('Error subiendo fotos:', error);
     res.status(500).json({ 
       success: false, 
-      error: 'Error al subir la imagen' 
+      error: 'Error al subir las fotos' 
+    });
+  }
+});
+
+// GET - Obtener fotos de una hoja específica
+router.get('/hoja/:id/fotos', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [fotos] = await pool.execute(
+      `SELECT id_foto, tipo_foto, nombre_archivo, tamano_archivo, tipo_mime, 
+              fe_registro, estado
+       FROM FLVEHI.FLVEH_F001 
+       WHERE id_hoja = ? AND estado = "ING"
+       ORDER BY tipo_foto ASC`,
+      [id]
+    );
+    
+    res.json({
+      success: true,
+      data: fotos,
+      total: fotos.length
+    });
+  } catch (error) {
+    console.error('Error getting hoja fotos:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener las fotos de la hoja' 
+    });
+  }
+});
+
+// GET - Obtener una foto específica
+router.get('/foto/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [foto] = await pool.execute(
+      'SELECT foto, tipo_mime, nombre_archivo FROM FLVEHI.FLVEH_F001 WHERE id_foto = ?',
+      [id]
+    );
+    
+    if (foto.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Foto no encontrada'
+      });
+    }
+
+    res.set({
+      'Content-Type': foto[0].tipo_mime || 'image/jpeg',
+      'Content-Disposition': `inline; filename="${foto[0].nombre_archivo || 'foto.jpg'}"`
+    });
+    
+    res.send(foto[0].foto);
+  } catch (error) {
+    console.error('Error getting foto:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener la foto' 
+    });
+  }
+});
+
+// POST - Subir foto de item individual
+router.post('/subir-foto-item', auth, [
+  body('id_hoja').notEmpty().isInt({ min: 1 }),
+  body('id_check').notEmpty().isInt({ min: 1 }),
+  body('foto').notEmpty(),
+  body('nombre_archivo').optional().trim(),
+  body('tamano_archivo').optional().isInt({ min: 1 }),
+  body('tipo_mime').optional().trim()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false, 
+        errors: errors.array() 
+      });
+    }
+
+    const { id_hoja, id_check, foto, nombre_archivo, tamano_archivo, tipo_mime } = req.body;
+
+    // Verificar que la hoja existe
+    const [hoja] = await pool.execute(
+      'SELECT id_hoja FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
+      [id_hoja]
+    );
+
+    if (hoja.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Hoja de salida no encontrada'
+      });
+    }
+
+    // Verificar que el item existe
+    const [item] = await pool.execute(
+      'SELECT id_check FROM FLVEHI.FLVEH_M007 WHERE id_check = ? AND estado = "ACT"',
+      [id_check]
+    );
+
+    if (item.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Item de checklist no encontrado'
+      });
+    }
+
+    // Eliminar foto existente de este item en esta hoja
+    await pool.execute(
+      'DELETE FROM FLVEHI.FLVEH_F002 WHERE id_hoja = ? AND id_check = ?',
+      [id_hoja, id_check]
+    );
+
+    // Insertar la nueva foto
+    await pool.execute(
+      `INSERT INTO FLVEHI.FLVEH_F002 (
+        id_hoja, id_check, id_empresa, tipo_hoja, foto, id_usuario, 
+        fe_registro, fe_modificacion, estado, nombre_archivo, tamano_archivo, tipo_mime
+      ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?)`,
+      [
+        id_hoja, id_check, 1, 'S', foto, req.user.id_usuario,
+        'ING', nombre_archivo || '', tamano_archivo || 0, tipo_mime || 'image/jpeg'
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: 'Foto del item subida exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error subiendo foto item:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al subir la foto del item' 
+    });
+  }
+});
+
+// GET - Obtener fotos de items de una hoja específica
+router.get('/hoja/:id/fotos-items', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [fotos] = await pool.execute(
+      `SELECT f.id_foto_item, f.id_check, f.nombre_archivo, f.tamano_archivo, f.tipo_mime, 
+              f.fe_registro, f.estado, c.desc_check
+       FROM FLVEHI.FLVEH_F002 f
+       LEFT JOIN FLVEHI.FLVEH_M007 c ON f.id_check = c.id_check
+       WHERE f.id_hoja = ? AND f.estado = "ING"
+       ORDER BY f.fe_registro ASC`,
+      [id]
+    );
+    
+    res.json({
+      success: true,
+      data: fotos,
+      total: fotos.length
+    });
+  } catch (error) {
+    console.error('Error getting fotos items:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener las fotos de los items' 
+    });
+  }
+});
+
+// GET - Obtener una foto de item específica
+router.get('/foto-item/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [foto] = await pool.execute(
+      'SELECT foto, tipo_mime, nombre_archivo FROM FLVEHI.FLVEH_F002 WHERE id_foto_item = ?',
+      [id]
+    );
+    
+    if (foto.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Foto del item no encontrada'
+      });
+    }
+
+    res.set({
+      'Content-Type': foto[0].tipo_mime || 'image/jpeg',
+      'Content-Disposition': `inline; filename="${foto[0].nombre_archivo || 'foto_item.jpg'}"`
+    });
+    
+    res.send(foto[0].foto);
+  } catch (error) {
+    console.error('Error getting foto item:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener la foto del item' 
+    });
+  }
+});
+
+// DELETE - Eliminar foto de item
+router.delete('/foto-item/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [result] = await pool.execute(
+      'DELETE FROM FLVEHI.FLVEH_F002 WHERE id_foto_item = ?',
+      [id]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Foto del item no encontrada'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Foto del item eliminada exitosamente'
+    });
+  } catch (error) {
+    console.error('Error deleting foto item:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al eliminar la foto del item' 
     });
   }
 });
@@ -429,6 +703,254 @@ router.put('/hoja/:id', auth, [
     res.status(500).json({ 
       success: false, 
       error: 'Error al actualizar la hoja' 
+    });
+  }
+});
+
+// GET - Obtener hojas de salida para autorización (estado ING)
+router.get('/autorizacion/hojas', auth, async (req, res) => {
+  try {
+    const { 
+      no_hoja, 
+      plataforma, 
+      placa, 
+      piloto, 
+      estado = 'ING', 
+      tipo_hoja = 'S' 
+    } = req.query;
+
+    let whereConditions = ['h.estado = ?', 'h.tipo_hoja = ?'];
+    let queryParams = [estado, tipo_hoja];
+
+    // Construir condiciones de búsqueda dinámicas
+    if (no_hoja) {
+      whereConditions.push('h.id_hoja LIKE ?');
+      queryParams.push(`%${no_hoja}%`);
+    }
+    if (plataforma) {
+      whereConditions.push('h.id_plataforma LIKE ?');
+      queryParams.push(`%${plataforma}%`);
+    }
+    if (placa) {
+      whereConditions.push('v.placa_id LIKE ?');
+      queryParams.push(`%${placa}%`);
+    }
+    if (piloto) {
+      whereConditions.push('(p.nombres LIKE ? OR p.apellidos LIKE ?)');
+      queryParams.push(`%${piloto}%`, `%${piloto}%`);
+    }
+
+    const [hojas] = await pool.execute(
+      `SELECT 
+        h.id_hoja,
+        h.id_plataforma,
+        h.placa_id,
+        h.lectura_km_num,
+        h.observaciones,
+        h.fe_registro,
+        h.id_vale,
+        p.nombres,
+        p.apellidos,
+        v.marca_vehiculo,
+        v.modelo,
+        v.placa_id as placa_vehiculo
+       FROM FLVEHI.FLVEH_T001 h
+       LEFT JOIN FLVEHI.FLVEH_M004 p ON h.id_piloto = p.id_piloto
+       LEFT JOIN FLVEHI.FLVEH_M001 v ON h.id_vehiculo = v.id_vehiculo
+       WHERE ${whereConditions.join(' AND ')}
+       ORDER BY h.fe_registro DESC`,
+      queryParams
+    );
+
+    // Obtener items con observaciones para cada hoja
+    const hojasConItems = await Promise.all(
+      hojas.map(async (hoja) => {
+        const [items] = await pool.execute(
+          `SELECT t2.id_check, t2.anotacion, m7.desc_check
+           FROM FLVEHI.FLVEH_T002 t2
+           LEFT JOIN FLVEHI.FLVEH_M007 m7 ON t2.id_check = m7.id_check
+           WHERE t2.id_hoja = ? AND t2.anotacion IS NOT NULL AND t2.anotacion != ''
+           ORDER BY t2.fe_registro ASC`,
+          [hoja.id_hoja]
+        );
+
+        return {
+          ...hoja,
+          items_con_observaciones: items
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      data: hojasConItems,
+      total: hojasConItems.length
+    });
+  } catch (error) {
+    console.error('Error getting hojas for authorization:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener las hojas para autorización' 
+    });
+  }
+});
+
+// POST - Autorizar hoja de salida
+router.post('/autorizacion/autorizar', auth, [
+  body('id_hoja').notEmpty().isInt({ min: 1 }),
+  body('id_vale').notEmpty().isInt({ min: 1 })
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false, 
+        errors: errors.array() 
+      });
+    }
+
+    const { id_hoja, id_vale } = req.body;
+
+    // Verificar que la hoja existe y está en estado ING
+    const [hoja] = await pool.execute(
+      'SELECT id_hoja, estado FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
+      [id_hoja]
+    );
+
+    if (hoja.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Hoja de salida no encontrada o ya no está en estado ING'
+      });
+    }
+
+    // Verificar que el vale existe y está disponible
+    const [vale] = await pool.execute(
+      'SELECT id_vale, estado FROM FLVEHI.FLVEH_M010 WHERE id_vale = ? AND estado IN ("DISP", "ACT")',
+      [id_vale]
+    );
+
+    if (vale.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vale de combustible no encontrado o no disponible'
+      });
+    }
+
+    // Actualizar la hoja con el vale y cambiar estado a AUT
+    await pool.execute(
+      'UPDATE FLVEHI.FLVEH_T001 SET id_vale = ?, estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_vale, id_hoja]
+    );
+
+    // Actualizar el estado del vale a AUT (autorizado)
+    await pool.execute(
+      'UPDATE FLVEHI.FLVEH_M010 SET estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_vale = ?',
+      [id_vale]
+    );
+
+    res.json({
+      success: true,
+      message: 'Hoja de salida autorizada exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error authorizing hoja:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al autorizar la hoja de salida' 
+    });
+  }
+});
+
+// GET - Obtener fotos de una hoja específica para autorización
+router.get('/autorizacion/hoja/:id/fotos', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Obtener fotos de motocicleta (FLVEH_F001) con datos de imagen
+    const [fotosMotocicleta] = await pool.execute(
+      `SELECT id_foto, tipo_foto, nombre_archivo, tamano_archivo, tipo_mime, 
+              fe_registro, estado, foto
+       FROM FLVEHI.FLVEH_F001 
+       WHERE id_hoja = ? AND estado = "ING" AND tipo_hoja = 'S'
+       ORDER BY tipo_foto ASC`,
+      [id]
+    );
+
+    // Obtener fotos de items (FLVEH_F002) con datos de imagen
+    const [fotosItems] = await pool.execute(
+      `SELECT f.id_foto_item, f.id_check, f.nombre_archivo, f.tamano_archivo, f.tipo_mime, 
+              f.fe_registro, f.estado, f.foto, c.desc_check
+       FROM FLVEHI.FLVEH_F002 f
+       LEFT JOIN FLVEHI.FLVEH_M007 c ON f.id_check = c.id_check
+       WHERE f.id_hoja = ? AND f.estado = "ING"
+       ORDER BY f.fe_registro ASC`,
+      [id]
+    );
+
+    // Convertir los datos de foto a string base64
+    const fotosMotocicletaBase64 = fotosMotocicleta.map(foto => {
+      let fotoBase64 = '';
+      if (typeof foto.foto === 'string') {
+        fotoBase64 = foto.foto;
+      } else if (Buffer.isBuffer(foto.foto)) {
+        fotoBase64 = foto.foto.toString('utf8');
+      } else if (foto.foto && typeof foto.foto.toString === 'function') {
+        fotoBase64 = foto.foto.toString('utf8');
+      }
+      
+      return {
+        id_foto: foto.id_foto,
+        tipo_foto: foto.tipo_foto,
+        nombre_archivo: foto.nombre_archivo,
+        tamano_archivo: foto.tamano_archivo,
+        tipo_mime: foto.tipo_mime,
+        fe_registro: foto.fe_registro,
+        estado: foto.estado,
+        foto_base64: fotoBase64
+      };
+    });
+
+    const fotosItemsBase64 = fotosItems.map(foto => {
+      let fotoBase64 = '';
+      if (typeof foto.foto === 'string') {
+        fotoBase64 = foto.foto;
+      } else if (Buffer.isBuffer(foto.foto)) {
+        fotoBase64 = foto.foto.toString('utf8');
+      } else if (foto.foto && typeof foto.foto.toString === 'function') {
+        fotoBase64 = foto.foto.toString('utf8');
+      }
+      
+      return {
+        id_foto_item: foto.id_foto_item,
+        id_check: foto.id_check,
+        nombre_archivo: foto.nombre_archivo,
+        tamano_archivo: foto.tamano_archivo,
+        tipo_mime: foto.tipo_mime,
+        fe_registro: foto.fe_registro,
+        estado: foto.estado,
+        desc_check: foto.desc_check,
+        foto_base64: fotoBase64
+      };
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        fotos_motocicleta: fotosMotocicletaBase64,
+        fotos_items: fotosItemsBase64
+      },
+      total: {
+        motocicleta: fotosMotocicletaBase64.length,
+        items: fotosItemsBase64.length
+      }
+    });
+  } catch (error) {
+    console.error('Error getting hoja fotos for authorization:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error al obtener las fotos de la hoja' 
     });
   }
 });

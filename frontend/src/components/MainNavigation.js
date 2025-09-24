@@ -26,7 +26,8 @@ import {
   BarChart3,
   Plus,
   Minus,
-  Eye
+  Eye,
+  Check
 } from 'lucide-react';
 
 
@@ -140,18 +141,19 @@ const MainNavigation = () => {
       icon: <Settings className="h-5 w-5" />,
       submenu: [
 
-        {
-          id: 'salidas',
-          label: 'Salidas',
-          icon: <LogOut className="h-4 w-4" />,
-          path: '/operaciones/salidas'
-        },
+
         {
           id: 'hoja-es',
           label: 'Hoja de Salida',
           icon: <FileText className="h-4 w-4" />,
           path: '/operaciones/salidas/hoja-es'
         },
+        {
+          id: 'autorizar-hoja-es',
+          label: 'Autorizar Hoja de Salida',
+          icon: <Check className="h-4 w-4" />,
+          path: '/operaciones/salidas/autorizacion-hojas'
+        },        
         {
           id: 'servicios',
           label: 'Servicios',

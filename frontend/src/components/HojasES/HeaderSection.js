@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, User, Truck, Gauge, FileText, Fuel } from 'lucide-react';
 import FuelGauge from './FuelGauge';
-import ImageUpload from './ImageUpload';
+import MotorcycleViews from './MotorcycleViews';
 import axiosInstance from '../../utils/axiosConfig';
 
 
@@ -24,46 +24,20 @@ const HeaderSection = ({
   // Nuevos props
   numeroHoja,
   setNumeroHoja,
-  valeSeleccionado,
-  setValeSeleccionado,
   porcentajeTanque,
   setPorcentajeTanque,
-  imagenKilometraje,
-  setImagenKilometraje
+  // Props para fotos
+  fotosCargadas,
+  fotosFaltantes,
+  onOpenFotosModal
 }) => {
   // Debug: Verificar props recibidos
   console.log('HeaderSection props:', {
     porcentajeTanque,
-    setPorcentajeTanque: typeof setPorcentajeTanque,
-    valeSeleccionado,
-    setValeSeleccionado: typeof setValeSeleccionado
+    setPorcentajeTanque: typeof setPorcentajeTanque
   });
 
-  // Estados locales
-  const [valesCombustible, setValesCombustible] = useState([]);
-  const [loadingVales, setLoadingVales] = useState(false);
-  const [loadingHoja, setLoadingHoja] = useState(false);
-
-  // Cargar vales de combustible al montar el componente
-  useEffect(() => {
-    loadValesCombustible();
-  }, []);
-
-  const loadValesCombustible = async () => {
-    setLoadingVales(true);
-    try {
-      const response = await axiosInstance.get('/api/hoja-es/vales-combustible');
-      setValesCombustible(response.data.data || []);
-    } catch (error) {
-      console.error('Error loading vales combustible:', error);
-    } finally {
-      setLoadingVales(false);
-    }
-  };
-
-  const handleImageChange = (file, preview) => {
-    setImagenKilometraje({ file, preview });
-  };
+  // Removido handleImageChange ya que ahora usamos el modal de fotos
   return (
     <div className="bg-gray-800 text-white p-6 rounded-lg">
       <div className="flex items-center justify-between mb-6">
@@ -179,6 +153,9 @@ const HeaderSection = ({
               Kilometraje actual: {kilometrajeActual}
             </p>
           )}
+          {
+            <p className="text-xs text-gray-400">15 Dias para el proximo servicio</p>
+          }
           {errors.kilometraje && (
             <p className="text-red-400 text-xs">{errors.kilometraje}</p>
           )}
@@ -201,7 +178,7 @@ const HeaderSection = ({
       </div>
 
       {/* Segunda fila de campos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Gauge de Combustible */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-300">
@@ -219,48 +196,17 @@ const HeaderSection = ({
           )}
         </div>
 
-        {/* Vale de Combustible */}
+        {/* Fotos de la Motocicleta */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-300">
-            <Fuel className="w-4 h-4 inline mr-2" />
-            Vale de Combustible
-          </label>
-          <select
-            value={valeSeleccionado}
-            onChange={(e) => setValeSeleccionado(e.target.value)}
-            disabled={loadingVales}
-            className={`w-full px-3 py-2 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.vale ? 'border-red-500' : 'border-gray-600'
-            } ${loadingVales ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <option value="">
-              {loadingVales ? 'Cargando vales...' : 'Seleccionar vale'}
-            </option>
-            {valesCombustible.map((vale) => (
-              <option key={vale.vale_id} value={vale.vale_id}>
-                {vale.display_text}
-              </option>
-            ))}
-          </select>
-          {errors.vale && (
-            <p className="text-red-400 text-xs">{errors.vale}</p>
-          )}
-        </div>
-
-        {/* Subida de Imagen */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-300">
-            <FileText className="w-4 h-4 inline mr-2" />
-            Foto del Kilometraje
-          </label>
           <div className="bg-gray-700 p-4 rounded-lg">
-            <ImageUpload
-              onImageChange={handleImageChange}
-              currentImage={imagenKilometraje?.preview}
+            <MotorcycleViews
+              onOpenModal={onOpenFotosModal}
+              fotosCargadas={fotosCargadas}
+              fotosFaltantes={fotosFaltantes}
             />
           </div>
-          {errors.imagen && (
-            <p className="text-red-400 text-xs">{errors.imagen}</p>
+          {errors.fotos && (
+            <p className="text-red-400 text-xs">{errors.fotos}</p>
           )}
         </div>
       </div>

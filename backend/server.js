@@ -51,6 +51,10 @@ app.use((req, res, next) => {
   req.setMaxListeners(0);
   res.setMaxListeners(0);
   
+  // Configurar límites de headers más generosos
+  req.headersLimit = 16384; // 16KB para headers
+  res.headersLimit = 16384; // 16KB para headers
+  
   next();
 });
 
