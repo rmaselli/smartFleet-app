@@ -749,6 +749,7 @@ router.get('/autorizacion/hojas', auth, async (req, res) => {
         h.observaciones,
         h.fe_registro,
         h.id_vale,
+        h.estado,
         p.nombres,
         p.apellidos,
         v.marca_vehiculo,
@@ -951,6 +952,49 @@ router.get('/autorizacion/hoja/:id/fotos', auth, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Error al obtener las fotos de la hoja' 
+    });
+  }
+});
+
+// PUT - Rechazar hoja de salida
+router.put('/autorizacion/hoja/:id/rechazar', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar que la hoja existe y está en estado ING
+    const [hoja] = await pool.execute(
+      'SELECT id_hoja, estado FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
+      [id]
+    );
+    
+    if (hoja.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Hoja no encontrada o no está en estado ING'
+      });
+    }
+    
+    // Actualizar el estado a CAN (Cancelado)
+    await pool.execute(
+      'UPDATE FLVEHI.FLVEH_T001 SET estado = "CAN", fe_modificacion = NOW() WHERE id_hoja = ?',
+      [id]
+    );
+    
+    console.log(`Hoja ${id} rechazada exitosamente`);
+    
+    res.json({
+      success: true,
+      message: 'Hoja rechazada exitosamente',
+      data: {
+        id_hoja: id,
+        estado: 'CAN'
+      }
+    });
+  } catch (error) {
+    console.error('Error rechazando hoja:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al rechazar la hoja'
     });
   }
 });

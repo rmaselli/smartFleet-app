@@ -175,7 +175,7 @@ const MainNavigation = () => {
       ]
     },
     {
-      id: 'repuestos',
+      id: 'procesos',
       label: 'Procesos',
       icon: <Package className="h-5 w-5" />,
       submenu: [
