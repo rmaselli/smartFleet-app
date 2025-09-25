@@ -801,9 +801,14 @@ router.post('/autorizacion/autorizar', auth, [
   body('id_hoja').notEmpty().isInt({ min: 1 }),
   body('id_vale').notEmpty().isInt({ min: 1 })
 ], async (req, res) => {
+  const connection = await pool.getConnection();
+  
   try {
+    await connection.beginTransaction();
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      await connection.rollback();
       return res.status(400).json({ 
         success: false, 
         errors: errors.array() 
@@ -812,13 +817,16 @@ router.post('/autorizacion/autorizar', auth, [
 
     const { id_hoja, id_vale } = req.body;
 
+    console.log(`🔍 Iniciando autorización de hoja ${id_hoja} con vale ${id_vale}`);
+
     // Verificar que la hoja existe y está en estado ING
-    const [hoja] = await pool.execute(
+    const [hoja] = await connection.execute(
       'SELECT id_hoja, estado FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ? AND estado = "ING"',
       [id_hoja]
     );
 
     if (hoja.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         error: 'Hoja de salida no encontrada o ya no está en estado ING'
@@ -826,41 +834,94 @@ router.post('/autorizacion/autorizar', auth, [
     }
 
     // Verificar que el vale existe y está disponible
-    const [vale] = await pool.execute(
+    const [vale] = await connection.execute(
       'SELECT id_vale, estado FROM FLVEHI.FLVEH_M010 WHERE id_vale = ? AND estado IN ("DISP", "ACT")',
       [id_vale]
     );
 
     if (vale.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         error: 'Vale de combustible no encontrado o no disponible'
       });
     }
 
-    // Actualizar la hoja con el vale y cambiar estado a AUT
-    await pool.execute(
+    console.log('✅ Validaciones completadas, iniciando actualizaciones...');
+
+    // 1. Actualizar FLVEH_T001 (encabezado de Hoja de Salida)
+    console.log('📝 Actualizando FLVEH_T001...');
+    await connection.execute(
       'UPDATE FLVEHI.FLVEH_T001 SET id_vale = ?, estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
       [id_vale, id_hoja]
     );
 
-    // Actualizar el estado del vale a AUT (autorizado)
-    await pool.execute(
-      'UPDATE FLVEHI.FLVEH_M010 SET estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_vale = ?',
-      [id_vale]
+    // 2. Actualizar FLVEH_T002 (detalle de Hoja de Salida)
+    console.log('📝 Actualizando FLVEH_T002...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_T002 SET estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_hoja]
     );
+
+    // 3. Actualizar FLVEH_F001 (fotos de motocicleta)
+    console.log('📝 Actualizando FLVEH_F001...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_F001 SET estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_hoja]
+    );
+
+    // 4. Actualizar FLVEH_F002 (fotos de items)
+    console.log('📝 Actualizando FLVEH_F002...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_F002 SET estado = "AUT", fe_modificacion = CURRENT_TIMESTAMP WHERE id_hoja = ?',
+      [id_hoja]
+    );
+
+    // 5. Actualizar FLVEH_M010 (vale de combustible)
+    console.log('📝 Actualizando FLVEH_M010...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_M010 SET estado = "AUT", id_hoja_salida = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_vale = ?',
+      [id_hoja, id_vale]
+    );
+
+    // 6. Actualizar FLVEH_M004 (pilotos) - agregar id_hoja
+    console.log('📝 Actualizando FLVEH_M004...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_M004 SET id_hoja = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_piloto = (SELECT id_piloto FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?)',
+      [id_hoja, id_hoja]
+    );
+
+    // 7. Actualizar FLVEH_M001 (vehículos) - agregar id_hoja
+    console.log('📝 Actualizando FLVEH_M001...');
+    await connection.execute(
+      'UPDATE FLVEHI.FLVEH_M001 SET id_hoja = ?, fe_modificacion = CURRENT_TIMESTAMP WHERE id_vehiculo = (SELECT id_vehiculo FROM FLVEHI.FLVEH_T001 WHERE id_hoja = ?)',
+      [id_hoja, id_hoja]
+    );
+
+    await connection.commit();
+    console.log('✅ Autorización completada exitosamente');
 
     res.json({
       success: true,
-      message: 'Hoja de salida autorizada exitosamente'
+      message: 'Hoja de salida autorizada exitosamente',
+      data: {
+        id_hoja: id_hoja,
+        id_vale: id_vale,
+        estado: 'AUT'
+      }
     });
 
   } catch (error) {
-    console.error('Error authorizing hoja:', error);
+    await connection.rollback();
+    console.error('❌ Error authorizing hoja:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ 
       success: false, 
-      error: 'Error al autorizar la hoja de salida' 
+      error: 'Error al autorizar la hoja de salida',
+      details: error.message
     });
+  } finally {
+    connection.release();
   }
 });
 

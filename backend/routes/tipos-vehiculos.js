@@ -76,9 +76,10 @@ router.get('/:id', auth, async (req, res) => {
 // POST - Crear nuevo tipo de vehículo
 router.post('/', auth, [
   body('id_empresa').optional().isInt({ min: 1 }),
-  body('cod_tipo_vehiculo').optional().isInt({ min: 1 }),
+  body('cod_vehiculo').optional().isNumeric(),
   body('cod_abreviado').notEmpty().trim().escape(),
   body('desc_tipo_vehiculo').notEmpty().trim().escape(),
+  body('tipo_vehiculo').optional().trim().escape(),
   body('estado').notEmpty().trim().escape(),
   body('observaciones').optional().trim().escape()
 ], async (req, res) => {
@@ -156,10 +157,10 @@ router.post('/', auth, [
 // PUT - Actualizar tipo de vehículo
 router.put('/:id', auth, [
   body('id_empresa').optional().isInt({ min: 1 }),
-  body('cod_vehiculo').optional().isInt({ min: 1 }),
+  body('cod_vehiculo').optional().isNumeric(),
   body('cod_abreviado').notEmpty().trim().escape(),
-  body('desc_vehiculo').notEmpty().trim().escape(),
-  body('tipo_vehiculo').notEmpty().trim().escape(),
+  body('desc_tipo_vehiculo').notEmpty().trim().escape(),
+  body('tipo_vehiculo').optional().trim().escape(),
   body('observaciones').optional().trim().escape()
 ], async (req, res) => {
   try {

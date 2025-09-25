@@ -72,6 +72,26 @@ TIPOS_VEHICULOS: {
   CATALOGO: '/api/tipos-vehiculos/cat'
 },
 
+// Endpoints de repuestos catálogo
+REPUESTOS_CATALOGO: {
+  LIST: '/api/repuestos-catalogo',
+  CREATE: '/api/repuestos-catalogo',
+  UPDATE: (id) => `/api/repuestos-catalogo/${id}`,
+  DELETE: (id) => `/api/repuestos-catalogo/${id}`,
+  GET: (id) => `/api/repuestos-catalogo/${id}`,
+  CATALOGO: '/api/repuestos-catalogo/cat'
+},
+
+// Endpoints de vales de combustible
+VALES_COMBUSTIBLE: {
+  LIST: '/api/vales-combustible',
+  CREATE: '/api/vales-combustible',
+  UPDATE: (id) => `/api/vales-combustible/${id}`,
+  DELETE: (id) => `/api/vales-combustible/${id}`,
+  GET: (id) => `/api/vales-combustible/${id}`,
+  CATALOGO: '/api/vales-combustible/cat'
+},
+
   // //////////////  operaciones  //////////////
   // Endpoints de repuestos
   REPUESTOS: {

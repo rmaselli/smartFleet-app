@@ -2,20 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import MainNavigation from '../../components/MainNavigation';
 import Breadcrumb from '../../components/Breadcrumb';
-
-
-//estos son los componentes de debug que se han comentado por el momento
-//ya que si se habilitan, se puede ver que la conexión a la API esta funcionando correctamente
-//pero se debe habilitar para poder hacer pruebas de debug
-
-//import ApiStatus from '../../components/ApiStatus';
-//import HeadersDebug from '../../components/HeadersDebug';
-//import ConnectionTest from '../../components/ConnectionTest';
-//import AuthDebug from '../../components/AuthDebug';
-//import LoginDebug from '../../components/LoginDebug';
-
 import { 
-  Truck, 
+  Package, 
   Plus, 
   Search, 
   Filter, 
@@ -29,82 +17,84 @@ import {
   Save,
   X,
   RefreshCw,
-  Bike
+  AlertTriangle,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import axiosInstance from '../../utils/axiosConfig';
 import API_CONFIG from '../../config/api';
 import { getEnvConfig } from '../../config/environment';
 
-
-const TiposVehiculos = () => {
+const RepuestosCatalogo = () => {
   const { user } = useAuth();
+  const [repuestos, setRepuestos] = useState([]);
   const [tiposVehiculos, setTiposVehiculos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingTiposVehiculos, setEditingTiposVehiculos] = useState(null);
+  const [editingRepuesto, setEditingRepuesto] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterType, setFilterType] = useState('all');
+  const [filterTipoVehiculo, setFilterTipoVehiculo] = useState('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [tiposVehiculosToDelete, setTiposVehiculosToDelete] = useState(null);
+  const [repuestoToDelete, setRepuestoToDelete] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
     id_empresa: 1,
-    cod_vehiculo: '',
-    cod_abreviado: 'XYZ',
-    desc_tipo_vehiculo: '',
+    id_sede: 1,
     tipo_vehiculo: '',
-    estado: 'ACT',
-    observaciones: ''
+    referencia: '',
+    cod_barras: '',
+    descripcion: '',
+    unidad_medida: '',
+    punto_reorden: '',
+    anotaciones: '',
+    estatus: 'ACT'
   });
 
   const [formErrors, setFormErrors] = useState({});
 
   const breadcrumbItems = [
     { id: 'catalogos', label: 'Catálogos', path: '/catalogos' },
-    { id: 'tipos-vehiculos', label: 'Tipos de Vehículos', path: '/catalogos/tipos-vehiculos' }
+    { id: 'repuestos-catalogo', label: 'Maestro de Repuestos', path: '/catalogos/repuestos-catalogo' }
   ];
 
   // Estados disponibles
   const estados = [
     { value: 'ACT', label: 'Activo' },
-    { value: 'INA', label: 'Inactivo' }
+    { value: 'INA', label: 'Inactivo' },
+    { value: 'OBS', label: 'Obsoleto' }
   ];
 
-  // Tipos de vehículo
-  const tiposVehiculo = [
-    'LOC',
-    'EXT'
-  ];
-
-  // Combustibles
-  const combustibles = [
-    'Gasolina',
-    'Diesel',
-    'Eléctrico',
-    'Híbrido',
-    'Gas Natural',
+  // Unidades de medida comunes
+  const unidadesMedida = [
+    'Pieza',
+    'Litro',
+    'Kilogramo',
+    'Metro',
+    'Caja',
+    'Paquete',
+    'Unidad',
     'Otro'
   ];
 
-  // Cargar Tipos de Vehículos
-  const loadTiposVehiculos = async () => {
+  // Cargar Repuestos
+  const loadRepuestos = async () => {
     setLoading(true);
     try {
-      console.log('🚀 Cargando tipos de vehículos desde:', API_CONFIG.TIPOS_VEHICULOS.LIST);
-      const response = await axiosInstance.get(API_CONFIG.TIPOS_VEHICULOS.LIST);
-      console.log('✅ Respuesta de tipos de vehículos:', response.data);
+      console.log('🚀 Cargando repuestos desde:', API_CONFIG.REPUESTOS_CATALOGO.LIST);
+      const response = await axiosInstance.get(API_CONFIG.REPUESTOS_CATALOGO.LIST);
+      console.log('✅ Respuesta de repuestos:', response.data);
       
       if (response.data.success) {
-        setTiposVehiculos(response.data.data);
-        console.log(`📊 ${response.data.data.length} tipos de vehículos cargados`);
+        setRepuestos(response.data.data);
+        console.log(`📊 ${response.data.data.length} repuestos cargados`);
       } else {
         console.warn('⚠️ Respuesta sin éxito:', response.data);
-        setTiposVehiculos([]);
+        setRepuestos([]);
       }
     } catch (error) {
-      console.error('❌ Error cargando tipos de vehículos:', error);
+      console.error('❌ Error cargando repuestos:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -112,7 +102,6 @@ const TiposVehiculos = () => {
         config: error.config
       });
       
-      // Mostrar mensaje de error más específico
       if (error.response?.status === 401) {
         alert('Error de autenticación. Por favor, inicia sesión nuevamente.');
       } else if (error.response?.status === 500) {
@@ -125,35 +114,48 @@ const TiposVehiculos = () => {
         alert(`Error ${error.response.status}: ${error.response.data?.error || 'Error desconocido'}`);
       }
       
-      setTiposVehiculos([]);
+      setRepuestos([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar tipos de vehículos al montar el componente
+  // Cargar tipos de vehículos
+  const loadTiposVehiculos = async () => {
+    try {
+      const response = await axiosInstance.get(API_CONFIG.TIPOS_VEHICULOS.CATALOGO);
+      setTiposVehiculos(response.data || []);
+    } catch (error) {
+      console.error('Error cargando tipos de vehículos:', error);
+    }
+  };
+
+  // Cargar datos al montar el componente
   useEffect(() => {
+    loadRepuestos();
     loadTiposVehiculos();
   }, []);
 
-  // Filtrar tipos de vehículos
-  const filteredTiposVehiculos = tiposVehiculos.filter(tiposVehiculos => {
-    const matchesSearch = tiposVehiculos.desc_tipo_vehiculo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tiposVehiculos.cod_abreviado?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtrar repuestos
+  const filteredRepuestos = repuestos.filter(repuesto => {
+    const matchesSearch = repuesto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         repuesto.referencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         repuesto.cod_barras?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === 'all' || tiposVehiculos.desc_tipo_vehiculo === filterStatus;
-    const matchesType = filterType === 'all' || tiposVehiculos.cod_abreviado === filterType;
+    const matchesStatus = filterStatus === 'all' || repuesto.estatus === filterStatus;
+    const matchesTipoVehiculo = filterTipoVehiculo === 'all' || repuesto.tipo_vehiculo == filterTipoVehiculo;
     
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesTipoVehiculo;
   });
 
   // Validar formulario
   const validateForm = () => {
     const errors = {};
     
-    if (!formData.cod_vehiculo) errors.cod_vehiculo = 'El código de la vehiculo es requerido';
-    if (!formData.desc_tipo_vehiculo.trim()) errors.desc_tipo_vehiculo = 'El nombre del tipo de vehículo es requerido';
-    if (!formData.cod_abreviado) errors.cod_abreviado = 'El código abreviado es requerido';
+    if (!formData.tipo_vehiculo) errors.tipo_vehiculo = 'El tipo de vehículo es requerido';
+    if (!formData.punto_reorden) errors.punto_reorden = 'El punto de reorden es requerido';
+    if (formData.punto_reorden && isNaN(formData.punto_reorden)) errors.punto_reorden = 'El punto de reorden debe ser un número';
+    if (formData.punto_reorden && parseFloat(formData.punto_reorden) < 0) errors.punto_reorden = 'El punto de reorden debe ser mayor o igual a 0';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -176,87 +178,96 @@ const TiposVehiculos = () => {
     }
   };
 
-  // Abrir formulario para nuevo tipo de vehículo
+  // Abrir formulario para nuevo repuesto
   const openNewForm = () => {
     setFormData({
       id_empresa: 1,
-      cod_vehiculo: '',
-      cod_abreviado: 'XYZ',
-      desc_tipo_vehiculo: '',
-      tipo_vehiculo: 'LOC',
-      estado: 'ACT',
-      observaciones: ''
+      id_sede: 1,
+      tipo_vehiculo: '',
+      referencia: '',
+      cod_barras: '',
+      descripcion: '',
+      unidad_medida: '',
+      punto_reorden: '',
+      anotaciones: '',
+      estatus: 'ACT'
     });
     setFormErrors({});
-    setEditingTiposVehiculos(null);
+    setEditingRepuesto(null);
     setShowForm(true);
   };
 
   // Abrir formulario para editar
-  const openEditForm = (tiposVehiculos) => {
+  const openEditForm = (repuesto) => {
     setFormData({
-      id_empresa: tiposVehiculos.id_empresa || 1,
-      cod_vehiculo: tiposVehiculos.cod_vehiculo || '',
-      cod_abreviado: tiposVehiculos.cod_abreviado,
-      desc_tipo_vehiculo: tiposVehiculos.desc_tipo_vehiculo || '',
-      tipo_vehiculo: tiposVehiculos.tipo_vehiculo || '',
-      observaciones: tiposVehiculos.observaciones || '',
-      estado: tiposVehiculos.estado
+      id_empresa: repuesto.id_empresa || 1,
+      id_sede: repuesto.id_sede || 1,
+      tipo_vehiculo: repuesto.tipo_vehiculo || '',
+      referencia: repuesto.referencia || '',
+      cod_barras: repuesto.cod_barras || '',
+      descripcion: repuesto.descripcion || '',
+      unidad_medida: repuesto.unidad_medida || '',
+      punto_reorden: repuesto.punto_reorden ? repuesto.punto_reorden.toString() : '',
+      anotaciones: repuesto.anotaciones || '',
+      estatus: repuesto.estatus
     });
     setFormErrors({});
-    setEditingTiposVehiculos(tiposVehiculos);
+    setEditingRepuesto(repuesto);
     setShowForm(true);
   };
 
   // Cerrar formulario
   const closeForm = () => {
     setShowForm(false);
-    setEditingTiposVehiculos(null);
+    setEditingRepuesto(null);
     setFormData({
       id_empresa: 1,
-      cod_vehiculo: '',
-      cod_abreviado: 'XYZ',
-      desc_tipo_vehiculo: '',
-      tipo_vehiculo: 'LOC',
-      estado: 'ACT',
-      observaciones: ''
+      id_sede: 1,
+      tipo_vehiculo: '',
+      referencia: '',
+      cod_barras: '',
+      descripcion: '',
+      unidad_medida: '',
+      punto_reorden: '',
+      anotaciones: '',
+      estatus: 'ACT'
     });
     setFormErrors({});
   };
 
-  // Guardar tipo de vehículo
-  const saveTipoVehiculo = async () => {
+  // Guardar repuesto
+  const saveRepuesto = async () => {
     console.log('<<Entra>>', formData);
     if (!validateForm()) return;
 
     try {
-      console.log('🚀 Guardando tipo de vehículo:', formData);
+      console.log('🚀 Guardando repuesto:', formData);
       
-        if (editingTiposVehiculos) {
+      if (editingRepuesto) {
         // Actualizar
-        console.log('📝 Actualizando tipo de vehículo ID:', editingTiposVehiculos.id_tipo_vehiculo);
-        const response = await axiosInstance.put(API_CONFIG.TIPOS_VEHICULOS.UPDATE(editingTiposVehiculos.id_tipo_vehiculo), formData);
-        console.log('✅ Tipo de vehículo actualizada:', response.data);
+        console.log('📝 Actualizando repuesto ID:', editingRepuesto.id_repuesto);
+        const response = await axiosInstance.put(API_CONFIG.REPUESTOS_CATALOGO.UPDATE(editingRepuesto.id_repuesto), formData);
+        console.log('✅ Repuesto actualizado:', response.data);
         
         if (response.data.success) {
-          alert('Tipo de vehículo actualizada exitosamente');
-          await loadTiposVehiculos();
+          alert('Repuesto actualizado exitosamente');
+          await loadRepuestos();
           closeForm();
         }
       } else {
         // Crear nuevo
-        console.log('🆕 Creando nuevo tipo de vehículo');
-        const response = await axiosInstance.post(API_CONFIG.TIPOS_VEHICULOS.CREATE, formData);
-        console.log('✅ Tipo de vehículo creada:', response.data);
+        console.log('🆕 Creando nuevo repuesto');
+        const response = await axiosInstance.post(API_CONFIG.REPUESTOS_CATALOGO.CREATE, formData);
+        console.log('✅ Repuesto creado:', response.data);
         
         if (response.data.success) {
-          alert('Tipo de vehículo creada exitosamente');
-          await loadTiposVehiculos();
+          alert('Repuesto creado exitosamente');
+          await loadRepuestos();
           closeForm();
         }
       }
     } catch (error) {
-      console.error('❌ Error guardando tipo de vehículo:', error);
+      console.error('❌ Error guardando repuesto:', error);
       console.error('📋 Detalles del error:', {
         message: error.message,
         status: error.response?.status,
@@ -264,7 +275,6 @@ const TiposVehiculos = () => {
         config: error.config
       });
       
-      // Mostrar mensaje de error más específico
       if (error.response?.status === 400) {
         const errorMsg = error.response.data?.error || 'Datos inválidos';
         alert(`Error de validación: ${errorMsg}`);
@@ -282,37 +292,37 @@ const TiposVehiculos = () => {
     }
   };
 
-  // Eliminar vehículo
-  const deleteTipoVehiculo = async (id) => {
+  // Eliminar repuesto
+  const deleteRepuesto = async (id) => {
     try {
-      const response = await axiosInstance.delete(API_CONFIG.TIPOS_VEHICULOS.DELETE(id));
+      const response = await axiosInstance.delete(API_CONFIG.REPUESTOS_CATALOGO.DELETE(id));
       if (response.data.success) {
-        await loadTiposVehiculos();
+        await loadRepuestos();
       }
     } catch (error) {
-      console.error('Error deleting tipo de vehículo:', error);
+      console.error('Error deleting repuesto:', error);
     }
   };
 
   // Mostrar confirmación de eliminación
-  const showDeleteConfirmation = (tiposVehiculos) => {
-    setTiposVehiculosToDelete(tiposVehiculos);
+  const showDeleteConfirmation = (repuesto) => {
+    setRepuestoToDelete(repuesto);
     setShowDeleteConfirm(true);
   };
 
   // Confirmar eliminación
   const confirmDelete = async () => {
-      if (tiposVehiculosToDelete) {
-      await deleteTipoVehiculo(tiposVehiculosToDelete.id_tipo_vehiculo);
+    if (repuestoToDelete) {
+      await deleteRepuesto(repuestoToDelete.id_repuesto);
       setShowDeleteConfirm(false);
-      setTiposVehiculosToDelete(null);
+      setRepuestoToDelete(null);
     }
   };
 
   // Cancelar eliminación
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
-    setTiposVehiculosToDelete(null);
+    setRepuestoToDelete(null);
   };
 
   // Obtener color del estado
@@ -320,16 +330,10 @@ const TiposVehiculos = () => {
     switch (status) {
       case 'ACT':
         return 'bg-green-100 text-green-800';
-      case 'SUP':
-        return 'bg-yellow-100 text-purple-800';
-      case 'TMP':
+      case 'INA':
+        return 'bg-gray-100 text-gray-800';
+      case 'OBS':
         return 'bg-red-100 text-red-800';
-      case 'TER':
-        return 'bg-orange-100 text-red-800';
-      case 'MED':
-        return 'bg-orange-100 text-yellow-800';
-      case 'RET':
-        return 'bg-orange-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -352,58 +356,22 @@ const TiposVehiculos = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              Catálogo de Tipos de Vehículos
+              Maestro de Repuestos
             </h1>
             <p className="text-slate-600">
-              Administra la información de todos los tipos de vehículos de la flota
+              Administra el catálogo de repuestos y sus especificaciones
             </p>
-
-            {/* Aqui muestra el status de la API            */}
-            {/*
-            <div className="mt-2">
-              <ApiStatus />
-            </div>
-            */}
-
-            {/* Aqui muestra el status de los headers */}
-            {/*
-            <div className="mt-2">
-              <HeadersDebug />
-            </div>
-            */}
             
-            {/* Aqui muestra el status de la conexión */}
             <div className="mt-2">
               <button
-                onClick={loadTiposVehiculos}
+                onClick={loadRepuestos}
                 disabled={loading}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Cargando...' : 'Recargar Tipos de Vehículos'}
+                {loading ? 'Cargando...' : 'Recargar Repuestos'}
               </button>
             </div>
-
-            {/* Aqui muestra el status de la conexión */}
-            {/*
-            <div className="mt-2">
-              <ConnectionTest />
-            </div>
-            */}
-
-            {/* Aqui muestra el status de la autenticación */}
-            {/*
-            <div className="mt-2">
-              <AuthDebug />
-            </div>
-            */}
-
-            {/* Aqui muestra el status de la conexión */}
-            {/*
-            <div className="mt-2">
-              <LoginDebug />
-            </div>
-            */}
           </div>
           
           <button 
@@ -411,7 +379,7 @@ const TiposVehiculos = () => {
             className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
           >
             <Plus className="h-4 w-4" />
-            <span>Nuevo Tipo de Vehículo</span>
+            <span>Nuevo Repuesto</span>
           </button>
         </div>
 
@@ -420,7 +388,7 @@ const TiposVehiculos = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-slate-900">
-                {editingTiposVehiculos ? 'Editar Tipo de Vehículo' : 'Nuevo Tipo de Vehículo'}
+                {editingRepuesto ? 'Editar Repuesto' : 'Nuevo Repuesto'}
               </h2>
               <button
                 onClick={closeForm}
@@ -432,109 +400,164 @@ const TiposVehiculos = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-
-              {/* Código de el tipo de vehículo */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Código del tipo de vehículo *
-                </label>
-                <input
-                  type="number"
-                    name="cod_vehiculo"
-                  value={formData.cod_vehiculo}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.cod_vehiculo ? 'border-red-500' : ''}`}
-                  placeholder="100"
-                />
-                {formErrors.cod_vehiculo && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.cod_vehiculo}</p>
-                )}
-              </div>
-
-              {/* Código Abreviado del tipo de vehículo */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Código Abreviado  *
-                </label>
-                <input
-                  type="text"
-                  name="cod_abreviado"
-                  value={formData.cod_abreviado}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.cod_abreviado ? 'border-red-500' : ''}`}
-                  placeholder="LOC"
-                />
-                {formErrors.cod_abreviado && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.cod_abreviado}</p>
-                )}
-              </div>
-
-              {/* Descripción */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Descripción del Tipo de Vehículo *
-                </label>
-                <input
-                  type="text"
-                  name="desc_tipo_vehiculo"
-                  value={formData.desc_tipo_vehiculo}
-                  onChange={handleFormChange}
-                  className={`input ${formErrors.desc_tipo_vehiculo ? 'border-red-500' : ''}`}
-                  placeholder="Tipo de Vehículo de Guatemala"
-                />
-                {formErrors.desc_tipo_vehiculo && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.desc_tipo_vehiculo}</p>
-                )}
-              </div>
-
-
               {/* Tipo de Vehículo */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tipo de Vehículo
+                  Tipo de Vehículo *
                 </label>
                 <select
                   name="tipo_vehiculo"
                   value={formData.tipo_vehiculo}
                   onChange={handleFormChange}
+                  className={`input ${formErrors.tipo_vehiculo ? 'border-red-500' : ''}`}
+                >
+                  <option value="">Seleccionar tipo de vehículo</option>
+                  {tiposVehiculos.map(tipo => (
+                    <option key={tipo.id_tipo_vehiculo} value={tipo.id_tipo_vehiculo}>
+                      {tipo.cod_abreviado} - {tipo.desc_tipo_vehiculo}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.tipo_vehiculo && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.tipo_vehiculo}</p>
+                )}
+              </div>
+
+              {/* Referencia */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Referencia
+                </label>
+                <input
+                  type="text"
+                  name="referencia"
+                  value={formData.referencia}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="REF001"
+                  maxLength={20}
+                />
+              </div>
+
+              {/* Código de Barras */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Código de Barras
+                </label>
+                <input
+                  type="text"
+                  name="cod_barras"
+                  value={formData.cod_barras}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="1234567890123"
+                  maxLength={20}
+                />
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Descripción
+                </label>
+                <input
+                  type="text"
+                  name="descripcion"
+                  value={formData.descripcion}
+                  onChange={handleFormChange}
+                  className="input"
+                  placeholder="Filtro de aceite"
+                  maxLength={50}
+                />
+              </div>
+
+              {/* Unidad de Medida */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Unidad de Medida
+                </label>
+                <select
+                  name="unidad_medida"
+                  value={formData.unidad_medida}
+                  onChange={handleFormChange}
                   className="input"
                 >
-                  <option value="LOC">LOC</option>
-                  <option value="EXT">EXT</option>
+                  <option value="">Seleccionar unidad</option>
+                  {unidadesMedida.map(unidad => (
+                    <option key={unidad} value={unidad}>{unidad}</option>
+                  ))}
                 </select>
               </div>
 
-              {/* Estado */}
+              {/* Punto de Reorden */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Estado
+                  Punto de Reorden *
                 </label>
                 <input
-                type="text"
-                name="estado"
-                value={formData.estado}
-                className="input"
-                disabled={true}
-                readOnly
-              />
+                  type="number"
+                  name="punto_reorden"
+                  value={formData.punto_reorden}
+                  onChange={handleFormChange}
+                  className={`input ${formErrors.punto_reorden ? 'border-red-500' : ''}`}
+                  placeholder="10"
+                  min="0"
+                  step="0.01"
+                />
+                {formErrors.punto_reorden && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.punto_reorden}</p>
+                )}
               </div>
 
+              {/* Existencia - Solo visualización */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Existencia
+                </label>
+                <input
+                  type="text"
+                  value={editingRepuesto ? (editingRepuesto.existencia || 0) : '0'}
+                  className="input bg-red-50 border-red-200 text-red-600 font-medium"
+                  disabled={true}
+                  readOnly
+                />
+                <p className="text-xs text-red-500 mt-1">Solo visualización</p>
+              </div>
+
+              {/* Estatus */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Estatus
+                </label>
+                <select
+                  name="estatus"
+                  value={formData.estatus}
+                  onChange={handleFormChange}
+                  className="input"
+                >
+                  {estados.map(estado => (
+                    <option key={estado.value} value={estado.value}>
+                      {estado.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
             </div>
 
-
-            {/* Observaciones */}
+            {/* Anotaciones */}
             <div className="mt-6">
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Observaciones
+                Anotaciones
               </label>
               <textarea
-                name="observaciones"
-                value={formData.observaciones}
+                name="anotaciones"
+                value={formData.anotaciones}
                 onChange={handleFormChange}
                 rows="3"
                 className="input w-full"
                 placeholder="Observaciones adicionales..."
+                maxLength={100}
               />
             </div>
 
@@ -547,11 +570,11 @@ const TiposVehiculos = () => {
                 Cancelar
               </button>
               <button
-                onClick={saveTipoVehiculo}
+                onClick={saveRepuesto}
                 className="btn-primary flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
-                <span>{editingTiposVehiculos ? 'Actualizar' : 'Guardar'}</span>
+                <span>{editingRepuesto ? 'Actualizar' : 'Guardar'}</span>
               </button>
             </div>
           </div>
@@ -565,35 +588,47 @@ const TiposVehiculos = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar por descripción, código abreviado..."
+                placeholder="Buscar por descripción, referencia, código de barras..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input pl-10"
               />
             </div>
             
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="input max-w-xs"
+            >
+              <option value="all">Todos los estatus</option>
+              {estados.map(estado => (
+                <option key={estado.value} value={estado.value}>{estado.label}</option>
+              ))}
+            </select>
 
             <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              value={filterTipoVehiculo}
+              onChange={(e) => setFilterTipoVehiculo(e.target.value)}
               className="input max-w-xs"
             >
               <option value="all">Todos los tipos</option>
-              {tiposVehiculo.map(tipo => (
-                <option key={tipo} value={tipo}>{tipo}</option>
+              {tiposVehiculos.map(tipo => (
+                <option key={tipo.id_tipo_vehiculo} value={tipo.id_tipo_vehiculo}>
+                  {tipo.cod_abreviado} - {tipo.desc_tipo_vehiculo}
+                </option>
               ))}
             </select>
 
             <button
-              onClick={loadTiposVehiculos}
+              onClick={loadRepuestos}
               className="btn-secondary flex items-center space-x-2"
             >
               <RefreshCw className="h-4 w-4" />
               <span>Actualizar</span>
-                  </button>
-              </div>
+            </button>
+          </div>
 
-          {/* Tabla de Tipos de Vehículos */}
+          {/* Tabla de Repuestos */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
@@ -602,10 +637,16 @@ const TiposVehiculos = () => {
                     Descripción
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Códigos Internos/Abreviados
+                    Tipo de Vehículo
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Estado
+                    Referencia / Código
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Existencia / Reorden
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Estatus
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Fecha Registro
@@ -618,96 +659,110 @@ const TiposVehiculos = () => {
               <tbody className="bg-white divide-y divide-slate-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center">
+                    <td colSpan="7" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
-                        <span className="text-sm font-medium text-gray-900">Cargando tipos de vehículos...</span>
+                        <span className="text-sm font-medium text-gray-900">Cargando repuestos...</span>
                         <span className="text-xs text-gray-500">Verificando conexión con el servidor...</span>
                       </div>
                     </td>
                   </tr>
-                ) : filteredTiposVehiculos.length === 0 ? (
+                ) : filteredRepuestos.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center">
+                    <td colSpan="7" className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        <User className="h-12 w-12 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">No se encontraron tipos de vehículos</span>
-                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar una nuevo tipo de vehículo</span>
+                        <Package className="h-12 w-12 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900">No se encontraron repuestos</span>
+                        <span className="text-xs text-gray-500">Intenta ajustar los filtros o agregar un nuevo repuesto</span>
                         <button
                           onClick={openNewForm}
                           className="mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Agregar Tipo de Vehículo
+                          Agregar Repuesto
                         </button>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredTiposVehiculos.map((tiposVehiculos) => (
-                    <tr key={tiposVehiculos.id_tipo_vehiculo} className="hover:bg-slate-50">
+                  filteredRepuestos.map((repuesto) => (
+                    <tr key={repuesto.id_repuesto} className="hover:bg-slate-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
                             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                              <User className="h-6 w-6 text-blue-600 fill-blue-600" />
-                </div>
-              </div>
+                              <Package className="h-6 w-6 text-blue-600 fill-blue-600" />
+                            </div>
+                          </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-slate-900">
-                              {tiposVehiculos.desc_tipo_vehiculo}
-                          </div>
+                              {repuesto.descripcion || 'Sin descripción'}
+                            </div>
                             <div className="text-sm text-slate-500">
-                              {tiposVehiculos.cod_abreviado}
-                </div>
-              </div>
-                </div>
+                              {repuesto.unidad_medida && `Unidad: ${repuesto.unidad_medida}`}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-slate-900">
-                            <div>Cód: {tiposVehiculos.cod_vehiculo }</div>
-                         { tiposVehiculos.cod_vehiculo.toString() && <div>Cód Abrev: {tiposVehiculos.cod_abreviado}</div>} 
-                         {/* {vehicle.kilometraje && <div>KM: {vehicle.kilometraje.toLocaleString()}</div>} */}
-                </div>
+                          {repuesto.tipo_vehiculo_display || 'N/A'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(tiposVehiculos.estado)}`}>
-                          {getStatusText(tiposVehiculos.estado)}
+                        <div className="text-sm text-slate-900">
+                          {repuesto.referencia && <div>Ref: {repuesto.referencia}</div>}
+                          {repuesto.cod_barras && <div>Código: {repuesto.cod_barras}</div>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm">
+                          <div className="text-red-600 font-medium">
+                            Existencia: {repuesto.existencia || 0}
+                          </div>
+                          <div className="text-slate-900">
+                            Reorden: {repuesto.punto_reorden}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(repuesto.estatus)}`}>
+                          {getStatusText(repuesto.estatus)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {tiposVehiculos.fe_registro ? new Date(tiposVehiculos.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
+                        {repuesto.fe_registro ? new Date(repuesto.fe_registro).toLocaleDateString(getEnvConfig('DATE_FORMAT')) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
-                            onClick={() => openEditForm(tiposVehiculos)}
+                            onClick={() => openEditForm(repuesto)}
                             className="text-blue-600 hover:text-blue-900 p-1"
                             title="Editar"
                           >
-                  <Edit className="h-4 w-4" />
-                </button>
+                            <Edit className="h-4 w-4" />
+                          </button>
                           <button
-                            onClick={() => showDeleteConfirmation(tiposVehiculos)}
+                            onClick={() => showDeleteConfirmation(repuesto)}
                             className="text-red-600 hover:text-red-900 p-1"
                             title="Eliminar"
                           >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
-        </div>
+          </div>
 
           {/* Información de registros */}
           <div className="mt-4 text-sm text-slate-500">
-            Mostrando {filteredTiposVehiculos.length} de {tiposVehiculos.length} tipos de vehículos
-            </div>
+            Mostrando {filteredRepuestos.length} de {repuestos.length} repuestos
           </div>
+        </div>
       </main>
 
       {/* Confirmación de eliminación */}
@@ -718,7 +773,7 @@ const TiposVehiculos = () => {
               Confirmar Eliminación
             </h3>
             <p className="text-slate-700 mb-6">
-              ¿Estás seguro de que quieres eliminar el tipo de vehículo "{tiposVehiculosToDelete?.id_tipo_vehiculo}"?
+              ¿Estás seguro de que quieres eliminar el repuesto "{repuestoToDelete?.descripcion || repuestoToDelete?.id_repuesto}"?
               Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end space-x-3">
@@ -742,4 +797,4 @@ const TiposVehiculos = () => {
   );
 };
 
-export default TiposVehiculos; 
+export default RepuestosCatalogo;

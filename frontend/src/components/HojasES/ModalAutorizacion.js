@@ -18,11 +18,34 @@ const ModalAutorizacion = ({ isOpen, onClose, onSuccess, hoja }) => {
 
   const loadVales = async () => {
     try {
-      const response = await axiosInstance.get('/api/hoja-es/vales-combustible');
-      setVales(response.data.data || []);
+      // Usar la nueva API de vales de combustible
+      const response = await axiosInstance.get('/api/vales-combustible');
+      if (response.data.success) {
+        // Filtrar solo vales disponibles (ACT, DISP, ING)
+        const valesDisponibles = response.data.data.filter(vale => 
+          ['ACT', 'DISP', 'ING'].includes(vale.estado)
+        );
+        
+        // Formatear para el select
+        const valesFormateados = valesDisponibles.map(vale => ({
+          vale_id: vale.id_vale,
+          display_text: `${vale.proveedor} - Q.${parseFloat(vale.valor_vale).toFixed(2)} - Cupón: ${vale.cupon} - Código: ${vale.codigo}`,
+          valor_vale: vale.valor_vale,
+          cupon: vale.cupon,
+          codigo: vale.codigo,
+          proveedor: vale.proveedor,
+          tipo_combustible: vale.tipo_combustible,
+          estado: vale.estado
+        }));
+        
+        setVales(valesFormateados);
+      } else {
+        setVales([]);
+      }
     } catch (error) {
       console.error('Error loading vales:', error);
       alert('Error al cargar los vales de combustible');
+      setVales([]);
     }
   };
 
@@ -191,13 +214,41 @@ const ModalAutorizacion = ({ isOpen, onClose, onSuccess, hoja }) => {
           {valeSeleccionado && (
             <div className="mb-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 mb-3">
                   <Fuel className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium text-blue-900">Vale Seleccionado:</span>
+                  <span className="font-medium text-blue-900">Vale de Combustible Seleccionado:</span>
                 </div>
-                <p className="text-blue-800 mt-1">
-                  {vales.find(v => v.vale_id === parseInt(valeSeleccionado))?.display_text}
-                </p>
+                {(() => {
+                  const valeSeleccionadoData = vales.find(v => v.vale_id === parseInt(valeSeleccionado));
+                  return valeSeleccionadoData ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-blue-900">Proveedor:</span>
+                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.proveedor}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-900">Tipo:</span>
+                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.tipo_combustible}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-900">Valor:</span>
+                        <span className="text-blue-800 ml-2">Q. {parseFloat(valeSeleccionadoData.valor_vale).toFixed(2)}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-900">Cupón:</span>
+                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.cupon}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-900">Código:</span>
+                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.codigo}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-blue-900">Estado:</span>
+                        <span className="text-blue-800 ml-2">{valeSeleccionadoData.estado}</span>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             </div>
           )}

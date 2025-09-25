@@ -116,10 +116,16 @@ const MainNavigation = () => {
           path: '/catalogos/check-master'
         },
         {
+          id: 'repuestos-catalogo',
+          label: 'Maestro de Repuestos',
+          icon: <Package className="h-4 w-4" />,
+          path: '/catalogos/repuestos-catalogo'
+        },
+        {
           id: 'vales-combustible',
           label: 'Vales de Combustible',
           icon: <Fuel className="h-4 w-4" />,
-          path: '/procesos/vales-combustible'
+          path: '/catalogos/vales-combustible'
         },
         {
           id: 'repuestos-servicios',

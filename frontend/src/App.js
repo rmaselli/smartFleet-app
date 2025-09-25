@@ -14,6 +14,8 @@ import Clientes from './pages/catalogos/Clientes';
 import UsuariosRoles from './pages/seguridad/UsuariosRoles';
 import CheckMaster from './pages/catalogos/Check-master';
 import TiposVehiculos from './pages/catalogos/Tipos-vehiculos';
+import RepuestosCatalogo from './pages/catalogos/Repuestos-catalogo';
+import ValesCombustible from './pages/catalogos/Vales-combustible';
 // Operaciones
 import Salidas from './pages/operaciones/Salidas';
 import HojaES from './pages/operaciones/HojaES';
@@ -88,6 +90,14 @@ function App() {
         <Route 
           path="/catalogos/tipos-vehiculos" 
           element={isAuthenticated ? <TiposVehiculos /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/catalogos/repuestos-catalogo" 
+          element={isAuthenticated ? <RepuestosCatalogo /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/catalogos/vales-combustible" 
+          element={isAuthenticated ? <ValesCombustible /> : <Navigate to="/login" />} 
         />
 
         {/* Rutas de Seguridad */}

@@ -5,7 +5,7 @@ import Breadcrumb from '../../components/Breadcrumb';
 import ModalAutorizacion from '../../components/HojasES/ModalAutorizacion';
 import ModalFotosAutorizacion from '../../components/HojasES/ModalFotosAutorizacion';
 import axiosInstance from '../../utils/axiosConfig';
-import { Search, RefreshCw, Check, Camera, Eye, Filter, CheckCircle, X } from 'lucide-react';
+import { Search, RefreshCw, Check, Camera, Eye, Filter } from 'lucide-react';
 
 const AutorizacionHojasES = () => {
   const { user } = useAuth();
@@ -104,23 +104,6 @@ const AutorizacionHojasES = () => {
   const handleVerFotos = (hoja) => {
     setSelectedHoja(hoja);
     setShowModalFotos(true);
-  };
-
-  const handleRechazar = async (hoja) => {
-    console.log('🔴 Función handleRechazar llamada para hoja:', hoja.id_hoja);
-    if (window.confirm(`¿Estás seguro de que deseas rechazar la hoja #${hoja.id_hoja}?`)) {
-      try {
-        setLoading(true);
-        await axiosInstance.put(`/api/hoja-es/autorizacion/hoja/${hoja.id_hoja}/rechazar`);
-        alert('Hoja rechazada exitosamente');
-        loadHojas(); // Recargar la lista
-      } catch (error) {
-        console.error('Error rechazando hoja:', error);
-        alert('Error al rechazar la hoja');
-      } finally {
-        setLoading(false);
-      }
-    }
   };
 
   const handleAutorizacionSuccess = () => {
@@ -350,58 +333,22 @@ const AutorizacionHojasES = () => {
                       {/* Acciones */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          {console.log('🔍 Renderizando acciones para hoja:', hoja.id_hoja, 'estado:', hoja.estado)}
                           {hoja.estado === 'ING' && (
-                            <>
-                              {/* Autorizar - Icono verde circle-check-big */}
-                              <button
-                                onClick={() => {
-                                  console.log('✅ Botón Autorizar clickeado');
-                                  handleAutorizar(hoja);
-                                }}
-                                className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
-                                title="Autorizar"
-                              >
-                                <CheckCircle className="w-6 h-6" />
-                              </button>
-                              
-                              {/* Fotos - Icono azul cámara */}
-                              <button
-                                onClick={() => {
-                                  console.log('📷 Botón Fotos clickeado');
-                                  handleVerFotos(hoja);
-                                }}
-                                className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
-                                title="Ver Fotos"
-                              >
-                                <Camera className="w-5 h-5" />
-                              </button>
-                              
-                              {/* Rechazar - Icono rojo X */}
-                              <button
-                                onClick={() => {
-                                  console.log('❌ Botón Rechazar clickeado');
-                                  handleRechazar(hoja);
-                                }}
-                                className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
-                                title="Rechazar"
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
-                            </>
-                          )}
-                          {hoja.estado !== 'ING' && (
                             <button
-                              onClick={() => {
-                                console.log('📷 Botón Fotos clickeado (no ING)');
-                                handleVerFotos(hoja);
-                              }}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
-                              title="Ver Fotos"
+                              onClick={() => handleAutorizar(hoja)}
+                              className="text-green-600 hover:text-green-900 p-1 rounded"
+                              title="Autorizar"
                             >
-                              <Camera className="w-5 h-5" />
+                              <Check className="w-5 h-5" />
                             </button>
                           )}
+                          <button
+                            onClick={() => handleVerFotos(hoja)}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                            title="Ver Fotos"
+                          >
+                            <Camera className="w-5 h-5" />
+                          </button>
                         </div>
                       </td>
                     </tr>

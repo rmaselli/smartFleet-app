@@ -12,6 +12,8 @@ const sedesRoutes = require('./routes/sedes');
 const clientesRoutes = require('./routes/clientes');
 const checkMasterRoutes = require('./routes/check-master');
 const tiposVehiculosRoutes = require('./routes/tipos-vehiculos');
+const repuestosCatalogoRoutes = require('./routes/repuestos-catalogo');
+const valesCombustibleRoutes = require('./routes/vales-combustible');
 // Rutas de Operaciones
 const salidasRoutes = require('./routes/operaciones/salidas');
 const serviciosRoutes = require('./routes/operaciones/servicios');
@@ -69,6 +71,8 @@ app.use('/api/sedes', sedesRoutes);
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/check-master', checkMasterRoutes);
 app.use('/api/tipos-vehiculos', tiposVehiculosRoutes);
+app.use('/api/repuestos-catalogo', repuestosCatalogoRoutes);
+app.use('/api/vales-combustible', valesCombustibleRoutes);
 // Rutas de Operaciones
 app.use('/api/salidas', salidasRoutes);
 app.use('/api/servicios', serviciosRoutes);
